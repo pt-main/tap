@@ -82,7 +82,7 @@ func help_cmd_handler(p *Parser, _ []string) error {
 			color.PrintlnColored(p._config.help_command_block_fmt, commands)
 			if el.optional_args != nil || el.required_args != nil {
 				color.PrintlnColored(p._config.help_args_header_block_fmt)
-				args_doc := p._config.help_args_data_block_fmt
+				args_doc := ""
 				if el.required_args != nil {
 					for arg := range el.required_args {
 						args_doc += "<[?RD]" + el.required_args[arg] + "[?RT]>"
@@ -92,7 +92,7 @@ func help_cmd_handler(p *Parser, _ []string) error {
 					}
 				}
 				if el.optional_args != nil {
-					if len(args_doc) != 0 {
+					if len(args_doc) > 2 {
 						args_doc += ", "
 					}
 					for arg := range el.optional_args {
@@ -105,11 +105,11 @@ func help_cmd_handler(p *Parser, _ []string) error {
 				if el.unlimited_max_args {
 					args_doc += "..."
 				}
-				color.PrintlnColored(args_doc)
+				color.PrintlnColored(p._config.help_args_data_block_fmt, args_doc)
 			}
 			color.PrintlnColored(p._config.help_docs_header_block_fmt)
 			for line := range docs {
-				color.PrintlnColored(p._config.help_docs_data_block_fmt + docs[line])
+				color.PrintlnColored(p._config.help_docs_data_block_fmt, docs[line])
 			}
 			color.PrintlnColored(p._config.help_end_block_fmt)
 			docstrings = append(docstrings, el.docstring)

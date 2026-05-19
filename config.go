@@ -26,13 +26,13 @@ func NewParserConfig(
 		help_args_header_block_fmt = "[?GN]⎬─ Args:[?RT]"
 	}
 	if help_args_data_block_fmt == "" {
-		help_args_data_block_fmt = "[?GN]│[?RT]    "
+		help_args_data_block_fmt = "[?GN]│[?RT]     %s"
 	}
 	if help_docs_header_block_fmt == "" {
 		help_docs_header_block_fmt = "[?GN]⎬─ Desc:[?RT]"
 	}
 	if help_docs_data_block_fmt == "" {
-		help_docs_data_block_fmt = "[?GN]│[?RT]     "
+		help_docs_data_block_fmt = "[?GN]│[?RT]     %s"
 	}
 	if help_end_block_fmt == "" {
 		help_end_block_fmt = "[?GN]╰───────[?RT]"

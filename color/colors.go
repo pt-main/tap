@@ -30,7 +30,7 @@ Map with colors and colors shortcuts.
 
 Contains -
 Bold, Underline, Reset,
-Black, Red, Green, Yellow, Blue, Mangeta, Cyan,
+Black, Red, Green, Yellow, Blue, Magenta, Cyan,
 Bright versions of colors and shortcuts (firtst
 and last letter of color)
 
