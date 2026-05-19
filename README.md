@@ -10,8 +10,6 @@ go get github.com/pt-main/tap
 **Tap** is a lightweight, zero-dependency library for building beautiful CLI applications in Go.  
 It features a simple command-based API, automatic `--flag` parsing, colored output, and fully customisable help messages.
 
-**Version:** `0.6.1`
-
 ## Features
 
 - **Commands** with required / optional arguments and unlimited trailing args
