@@ -44,6 +44,9 @@ type Parser struct {
 	_commands     map[string]command
 }
 
+// Help docstring
+const help_docs = "Show this message"
+
 /*
 Realization of help command.
 Build autodocumentation in terminal for commans.
@@ -124,7 +127,7 @@ func NewParser(cli_name string, about string, help_commands []string) Parser {
 		help_commands = []string{"help", "-h"}
 	}
 	for _, cmd := range help_commands {
-		p.AddCommand(cmd, help_cmd_handler, "Show this message", nil, nil, false)
+		p.AddCommand(cmd, help_cmd_handler, help_docs, nil, nil, false)
 	}
 	return p
 }
@@ -232,7 +235,17 @@ func (p *Parser) Main() error {
 	p.__check_flags()
 	if len(argv) < 1 {
 		p._print_about()
-		color.PrintlnColored("[?RD]Has no command.[?RT] Type [[?YW]help[?RT]] for help.")
+		var help_name string
+		for _, el := range p._commands {
+			if el.docstring == help_docs {
+				help_name = el.name
+				break
+			}
+		}
+		color.PrintlnColored(
+			"[?RD]Has no command.[?RT] Type [[?YW]%s[?RT]] for help.",
+			help_name,
+		)
 		return errors.New("No command provided")
 	}
 	p.__print_verbose("Finding and calling command...")
