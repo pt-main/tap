@@ -73,7 +73,7 @@ func help_cmd_handler(p *Parser, _ []string) error {
 					commands += " [?RT]/[?YW] "
 				}
 			}
-			color.PrintlnColored("[?GN]╭─────── Command[?RT] [[?YW]%s[?RT]]", el.name)
+			color.PrintlnColored("[?GN]╭─────── Command[?RT] [[?YW]%s[?RT]]", commands)
 			if el.optional_args != nil || el.required_args != nil {
 				color.PrintlnColored("[?GN]⎬─ Args:[?RT]")
 				args_doc := "[?GN]│[?RT]    "
