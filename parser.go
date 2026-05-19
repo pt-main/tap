@@ -119,7 +119,7 @@ func NewParser(cli_name string, about string, help_commands []string) Parser {
 		flags:     map[string]string{},
 	}
 	if help_commands == nil {
-		help_commands = []string{"help"}
+		help_commands = []string{"help", "-h"}
 	}
 	for _, cmd := range help_commands {
 		p.AddCommand(cmd, help_cmd_handler, "Show this message", nil, nil, false)
