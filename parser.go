@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/pt-main/tap/color"
@@ -49,48 +50,65 @@ Docs contains name of command, args (optional and required) and description
 */
 func help_cmd_handler(p *Parser, _ []string) error {
 	p._print_about()
+	docstrigs := []string{}
 	for key := range p._commands {
 		el := p._commands[key]
 		docs := strings.Split(el.docstring, "\n")
-		color.PrintlnColored("[?GN]╭─────── Command[?RT] [[?YW]%s[?RT]]", el.name)
-		if el.optional_args != nil || el.required_args != nil {
-			color.PrintlnColored("[?GN]⎬─ Args:[?RT]")
-			args_doc := "[?GN]│[?RT]    "
-			if el.required_args != nil {
-				for arg := range el.required_args {
-					args_doc += "<[?RD]" + el.required_args[arg] + "[?RT]>"
-					if arg != (len(el.required_args) - 1) {
-						args_doc += ", "
+		if slices.Index(docstrigs, el.docstring) == -1 {
+			cmds := []string{}
+			for key := range p._commands {
+				if p._commands[key].docstring == el.docstring {
+					cmds = append(cmds, p._commands[key].name)
+				}
+			}
+			commands := ""
+			for idx, cmd := range cmds {
+				commands += cmd
+				if idx != (len(cmds) - 1) {
+					commands += " / "
+				}
+			}
+			color.PrintlnColored("[?GN]╭─────── Command[?RT] [[?YW]%s[?RT]]", el.name)
+			if el.optional_args != nil || el.required_args != nil {
+				color.PrintlnColored("[?GN]⎬─ Args:[?RT]")
+				args_doc := "[?GN]│[?RT]    "
+				if el.required_args != nil {
+					for arg := range el.required_args {
+						args_doc += "<[?RD]" + el.required_args[arg] + "[?RT]>"
+						if arg != (len(el.required_args) - 1) {
+							args_doc += ", "
+						}
 					}
 				}
-			}
-			if el.optional_args != nil {
-				if len(args_doc) != 0 {
-					args_doc += ", "
-				}
-				for arg := range el.optional_args {
-					args_doc += "[[?BE]" + el.optional_args[arg] + "[?RT]]"
-					if arg != (len(el.optional_args) - 1) {
+				if el.optional_args != nil {
+					if len(args_doc) != 0 {
 						args_doc += ", "
 					}
+					for arg := range el.optional_args {
+						args_doc += "[[?BE]" + el.optional_args[arg] + "[?RT]]"
+						if arg != (len(el.optional_args) - 1) {
+							args_doc += ", "
+						}
+					}
 				}
+				if el.unlimited_max_args {
+					args_doc += "..."
+				}
+				color.PrintlnColored(args_doc)
 			}
-			if el.unlimited_max_args {
-				args_doc += "..."
+			color.PrintlnColored("[?GN]⎬─ Desc:[?RT]")
+			for line := range docs {
+				color.PrintlnColored("[?GN]│[?RT]    %s", docs[line])
 			}
-			color.PrintlnColored(args_doc)
+			color.PrintlnColored("[?GN]╰───────[?RT]")
+			docstrigs = append(docstrigs, el.docstring)
 		}
-		color.PrintlnColored("[?GN]⎬─ Desc:[?RT]")
-		for line := range docs {
-			color.PrintlnColored("[?GN]│[?RT]    %s", docs[line])
-		}
-		color.PrintlnColored("[?GN]╰───────[?RT]")
 	}
 	return nil
 }
 
 // Create Parser object.
-func NewParser(cli_name string, about string) Parser {
+func NewParser(cli_name string, about string, help_commands []string) Parser {
 	p := Parser{
 		_cli_name:   cli_name,
 		_about_info: about,
@@ -100,7 +118,12 @@ func NewParser(cli_name string, about string) Parser {
 		_commands: map[string]command{},
 		flags:     map[string]string{},
 	}
-	p.AddCommand("help", help_cmd_handler, "Show this message", nil, nil, false)
+	if help_commands == nil {
+		help_commands = []string{"help"}
+	}
+	for _, cmd := range help_commands {
+		p.AddCommand(cmd, help_cmd_handler, "Show this message", nil, nil, false)
+	}
 	return p
 }
 
@@ -206,6 +229,8 @@ func (p *Parser) Main() error {
 	argv := p._parse_args(os.Args[1:])
 	p.__check_flags()
 	if len(argv) < 1 {
+		p._print_about()
+		color.PrintlnColored("[?RD]Has no command.[?RT] Type [[?YW]help[?RT]] for help.")
 		return errors.New("No command provided")
 	}
 	p.__print_verbose("Finding and calling command...")
