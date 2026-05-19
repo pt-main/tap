@@ -10,8 +10,6 @@ import (
 	"github.com/pt-main/tap/color"
 )
 
-const Version = "0.6.0"
-
 // Type of handler for command.
 type HandlerFuncType func(*Parser, []string) error
 
