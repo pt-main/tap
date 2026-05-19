@@ -55,11 +55,11 @@ Docs contains name of command, args (optional and required) and description
 */
 func help_cmd_handler(p *Parser, _ []string) error {
 	p._print_about()
-	docstrigs := []string{}
+	docstrings := []string{}
 	for key := range p._commands {
 		el := p._commands[key]
 		docs := strings.Split(el.docstring, "\n")
-		if slices.Index(docstrigs, el.docstring) == -1 {
+		if slices.Index(docstrings, el.docstring) == -1 {
 			cmds := []string{}
 			for key := range p._commands {
 				if p._commands[key].docstring == el.docstring {
@@ -70,7 +70,7 @@ func help_cmd_handler(p *Parser, _ []string) error {
 			for idx, cmd := range cmds {
 				commands += cmd
 				if idx != (len(cmds) - 1) {
-					commands += " / "
+					commands += " [?RT]/[?YW] "
 				}
 			}
 			color.PrintlnColored("[?GN]╭─────── Command[?RT] [[?YW]%s[?RT]]", el.name)
@@ -106,7 +106,7 @@ func help_cmd_handler(p *Parser, _ []string) error {
 				color.PrintlnColored("[?GN]│[?RT]    %s", docs[line])
 			}
 			color.PrintlnColored("[?GN]╰───────[?RT]")
-			docstrigs = append(docstrigs, el.docstring)
+			docstrings = append(docstrings, el.docstring)
 		}
 	}
 	return nil
