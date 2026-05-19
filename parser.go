@@ -40,7 +40,7 @@ type Parser struct {
 	_cli_name     string
 	_about_info   string
 	_parser_flags map[string]bool
-	flags         map[string]string
+	Flags         map[string]string
 	_commands     map[string]command
 	_config       ParserConfig
 }
@@ -123,7 +123,7 @@ func NewParser(cli_name string, about string, help_commands []string, config Par
 			"debug": false, "verbose": false,
 		},
 		_commands: map[string]command{},
-		flags:     map[string]string{},
+		Flags:     map[string]string{},
 		_config:   config,
 	}
 	if help_commands == nil {
@@ -185,7 +185,7 @@ Write "" if flag has no value (--flag=""/--flag)
 func (p *Parser) _parse_args(argv []string) []string {
 	p.__print_verbose("Parsing args.")
 	flags, res := utils{}.parse_args(argv)
-	p.flags = flags
+	p.Flags = flags
 	return res
 }
 
@@ -216,17 +216,17 @@ func (p *Parser) _print_about() {
 
 // Inner function for check and enable system flags
 func (p *Parser) __check_flags() {
-	_, verbose_ok := p.flags["verbose"]
+	_, verbose_ok := p.Flags["verbose"]
 	if verbose_ok {
 		p._parser_flags["verbose"] = true
 	}
-	_, debug_ok := p.flags["debug"]
+	_, debug_ok := p.Flags["debug"]
 	if debug_ok {
 		p._parser_flags["debug"] = true
 	}
 	p.__print_verbose(
 		"Check flags by verbose and debug. \nFlags: %v, Parser flags: %v",
-		p.flags, p._parser_flags,
+		p.Flags, p._parser_flags,
 	)
 }
 
