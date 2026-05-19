@@ -115,7 +115,7 @@ func help_cmd_handler(p *Parser, _ []string) error {
 }
 
 // Create Parser object.
-func NewParser(cli_name string, about string, help_commands []string, config ParserConfig) Parser {
+func NewParser(cli_name string, about string, help_commands []string, config ParserConfig) *Parser {
 	p := Parser{
 		_cli_name:   cli_name,
 		_about_info: about,
@@ -132,7 +132,7 @@ func NewParser(cli_name string, about string, help_commands []string, config Par
 	for _, cmd := range help_commands {
 		p.AddCommand(cmd, help_cmd_handler, help_docs, nil, nil, false)
 	}
-	return p
+	return &p
 }
 
 // Add command to parser.

@@ -22,6 +22,9 @@ func Set(text string) string {
 		}
 		result = strings.ReplaceAll(result, "[?"+code+"]", ansi)
 	}
+	if !ColorEnabled {
+		return result
+	}
 	return result + Colors["RESET"]
 }
 
