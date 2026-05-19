@@ -158,7 +158,7 @@ Handler args format: [parser: Parser], [args: []string]
 func (p *Parser) _call_command(name string, args []string) error {
 	cmd, ok := p._commands[name]
 	if !ok {
-		return fmt.Errorf("Key not in dict: %s", name)
+		return fmt.Errorf("Unknown command: %s", name)
 	}
 	full_length := len(cmd.optional_args) + len(cmd.required_args)
 	cond1 := (len(args) > full_length) && (!cmd.unlimited_max_args)
