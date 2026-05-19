@@ -43,8 +43,11 @@ type Parser struct {
 	_config       ParserConfig
 }
 
+// Value of docstring for hide command from help
+const DONT_SHOW = "#[DON'T SHOW]#"
+
 // Help docstring
-const help_docs = "Show this message"
+const HELP_DOCS = "Generate and print help message"
 
 /*
 Realization of help command.
@@ -58,6 +61,9 @@ func help_cmd_handler(p *Parser, _ []string) error {
 	for key := range p._commands {
 		el := p._commands[key]
 		docs := strings.Split(el.docstring, "\n")
+		if el.docstring == DONT_SHOW {
+			docstrings = append(docstrings, el.docstring)
+		}
 		if slices.Index(docstrings, el.docstring) == -1 {
 			cmds := []string{}
 			for key := range p._commands {
@@ -128,7 +134,7 @@ func NewParser(cli_name string, about string, help_commands []string, config Par
 		help_commands = []string{"help", "h"}
 	}
 	for _, cmd := range help_commands {
-		p.AddCommand(cmd, help_cmd_handler, help_docs, nil, nil, false)
+		p.AddCommand(cmd, help_cmd_handler, HELP_DOCS, nil, nil, false)
 	}
 	return &p
 }
@@ -238,7 +244,7 @@ func (p *Parser) Main() error {
 		p._print_about()
 		var help_name string
 		for _, el := range p._commands {
-			if el.docstring == help_docs {
+			if el.docstring == HELP_DOCS {
 				help_name = el.name
 				break
 			}
