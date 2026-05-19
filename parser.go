@@ -10,7 +10,7 @@ import (
 	"github.com/pt-main/tap/color"
 )
 
-const Version = "0.5.6"
+const Version = "0.6.0"
 
 // Type of handler for command.
 type HandlerFuncType func(*Parser, []string) error
@@ -42,6 +42,7 @@ type Parser struct {
 	_parser_flags map[string]bool
 	flags         map[string]string
 	_commands     map[string]command
+	_config       ParserConfig
 }
 
 // Help docstring
@@ -66,17 +67,18 @@ func help_cmd_handler(p *Parser, _ []string) error {
 					cmds = append(cmds, p._commands[key].name)
 				}
 			}
-			commands := ""
+			commands := "[?YW]"
 			for idx, cmd := range cmds {
 				commands += cmd
 				if idx != (len(cmds) - 1) {
 					commands += " [?RT]/[?YW] "
 				}
 			}
-			color.PrintlnColored("[?GN]╭─────── Command[?RT] [[?YW]%s[?RT]]", commands)
+			commands += "[?RT]"
+			color.PrintlnColored(p._config.help_command_block_fmt, commands)
 			if el.optional_args != nil || el.required_args != nil {
-				color.PrintlnColored("[?GN]⎬─ Args:[?RT]")
-				args_doc := "[?GN]│[?RT]    "
+				color.PrintlnColored(p._config.help_args_header_block_fmt)
+				args_doc := p._config.help_args_data_block_fmt
 				if el.required_args != nil {
 					for arg := range el.required_args {
 						args_doc += "<[?RD]" + el.required_args[arg] + "[?RT]>"
@@ -101,11 +103,11 @@ func help_cmd_handler(p *Parser, _ []string) error {
 				}
 				color.PrintlnColored(args_doc)
 			}
-			color.PrintlnColored("[?GN]⎬─ Desc:[?RT]")
+			color.PrintlnColored(p._config.help_docs_header_block_fmt)
 			for line := range docs {
-				color.PrintlnColored("[?GN]│[?RT]    %s", docs[line])
+				color.PrintlnColored(p._config.help_docs_data_block_fmt + docs[line])
 			}
-			color.PrintlnColored("[?GN]╰───────[?RT]")
+			color.PrintlnColored(p._config.help_end_block_fmt)
 			docstrings = append(docstrings, el.docstring)
 		}
 	}
@@ -113,7 +115,7 @@ func help_cmd_handler(p *Parser, _ []string) error {
 }
 
 // Create Parser object.
-func NewParser(cli_name string, about string, help_commands []string) Parser {
+func NewParser(cli_name string, about string, help_commands []string, config ParserConfig) Parser {
 	p := Parser{
 		_cli_name:   cli_name,
 		_about_info: about,
@@ -122,9 +124,10 @@ func NewParser(cli_name string, about string, help_commands []string) Parser {
 		},
 		_commands: map[string]command{},
 		flags:     map[string]string{},
+		_config:   config,
 	}
 	if help_commands == nil {
-		help_commands = []string{"help", "-h"}
+		help_commands = []string{"help", "h"}
 	}
 	for _, cmd := range help_commands {
 		p.AddCommand(cmd, help_cmd_handler, help_docs, nil, nil, false)

@@ -5,6 +5,9 @@ import (
 	"strings"
 )
 
+// Color is not enabled if false
+var ColorEnabled = true
+
 /*
 Set applies colors to text using shortcodes like [?RED], [?GREEN], [?BOLD]
 
@@ -14,6 +17,9 @@ to set color like [?RD], [?GN], [?BD].
 func Set(text string) string {
 	result := text
 	for code, ansi := range Colors {
+		if !ColorEnabled {
+			ansi = ""
+		}
 		result = strings.ReplaceAll(result, "[?"+code+"]", ansi)
 	}
 	return result + Colors["RESET"]
