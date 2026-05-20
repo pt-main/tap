@@ -2,14 +2,13 @@ package tap
 
 import "strings"
 
-// Class with utils for Parser
+// utils is an internal helper type providing argument parsing functionality.
 type utils struct{}
 
-/*
-Parse args for flags and args.
-
-Read arguments like 'arg', '--flag' and '--flag=key' (or '--flag:key')
-*/
+// parse_args processes a slice of command-line arguments.
+// It detects flags prefixed with "--" (e.g., "--flag", "--key=value", "--key:value").
+// Flags without a value are stored with an empty string.
+// Returns a map of flag names to their values, and a slice of non-flag arguments.
 func (u utils) parse_args(argv []string) (map[string]string, []string) {
 	flags := make(map[string]string)
 	var result []string

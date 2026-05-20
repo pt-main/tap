@@ -5,15 +5,14 @@ import (
 	"strings"
 )
 
-// Color is not enabled if false
+// ColorEnabled globally enables or disables ANSI color output.
+// When false, all color codes are stripped from the output.
 var ColorEnabled = true
 
-/*
-Set applies colors to text using shortcodes like [?RED], [?GREEN], [?BOLD]
-
-Also you can set color using shortcuts - first and last letters of color
-to set color like [?RD], [?GN], [?BD].
-*/
+// Set replaces short color codes like [?RED] or [?GN] in the input string
+// with the corresponding ANSI escape sequences. If ColorEnabled is false,
+// the codes are removed entirely. The ANSI reset code is automatically
+// appended at the end when colors are enabled.
 func Set(text string) string {
 	result := text
 	for code, ansi := range Colors {
@@ -28,7 +27,8 @@ func Set(text string) string {
 	return result + Colors["RESET"]
 }
 
-// Convert list of strings to colored strings using Set
+// ConvertColored applies color formatting to each string in the slice
+// using Set and returns a new slice with the colored strings.
 func ConvertColored(text ...string) []string {
 	result := []string{}
 	for arg := range text {
@@ -37,13 +37,15 @@ func ConvertColored(text ...string) []string {
 	return result
 }
 
-// PrintColored prints formatted text with color codes replaced
+// PrintColored formats the string using fmt.Sprintf, replaces color codes,
+// and writes the result to stdout without a trailing newline.
 func PrintColored(format string, args ...interface{}) {
 	formatted := fmt.Sprintf(format, args...)
 	fmt.Print(Set(formatted))
 }
 
-// PrintlnColored prints text with color codes replaced and adds newline
+// PrintlnColored formats the string using fmt.Sprintf, replaces color codes,
+// and writes the result to stdout followed by a newline.
 func PrintlnColored(format string, args ...interface{}) {
 	formatted := fmt.Sprintf(format, args...)
 	fmt.Println(Set(formatted))

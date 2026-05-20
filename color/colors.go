@@ -1,6 +1,9 @@
+// Package color provides ANSI color formatting for terminal output.
+// It supports short color codes like [?GN] (green), [?RD] (red), [?BOLD], etc.
+// Coloring can be globally disabled by setting color.ColorEnabled = false.
 package color
 
-// Color for formatting strings
+// Color codes for ANSI escape sequences.
 const (
 	black   = "\033[30m"
 	red     = "\033[31m"
@@ -25,17 +28,10 @@ const (
 	underline = "\033[4m"
 )
 
-/*
-Map with colors and colors shortcuts.
-
-Contains -
-Bold, Underline, Reset,
-Black, Red, Green, Yellow, Blue, Magenta, Cyan,
-Bright versions of colors and shortcuts (firtst
-and last letter of color)
-
-All keys is uppercased.
-*/
+// Colors maps short color codes (uppercase) to ANSI escape sequences.
+// Supported codes: BOLD/BD, UNDERLINE/UE, RESET/RT,
+// basic colors (BLACK/BK, RED/RD, GREEN/GN, YELLOW/YW, BLUE/BE, MAGENTA/MA, CYAN/CN),
+// and their bright variants (BBLACK/BBK, BRED/BRD, BGREEN/BGN, BYELLOW/BYW, BBLUE/BBE, BMAGENTA/BMA, BCYAN/BCN).
 var Colors = map[string]string{
 	"BOLD": bold, "BD": bold,
 	"UNDERLINE": underline, "UE": underline,

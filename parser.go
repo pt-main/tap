@@ -10,10 +10,12 @@ import (
 	"github.com/pt-main/tap/color"
 )
 
-// Type of handler for command.
+// HandlerFuncType defines the signature for command handler functions.
+// It receives the parser instance and the slice of command arguments.
+// Returns an error if the command execution fails.
 type HandlerFuncType func(*Parser, []string) error
 
-// Inner struct for save commands to dict
+// command stores internal metadata for a registered command.
 type command struct {
 	name               string
 	handler            HandlerFuncType
@@ -26,7 +28,7 @@ type command struct {
 /*
 # Tap - Terminal Argument Parsing
 
-This parser - main object in tap.
+This parser is the main object in tap.
 
 Main methods:
 
@@ -43,18 +45,17 @@ type Parser struct {
 	_config       ParserConfig
 }
 
-// Value of docstring for hide command from help
+// DONT_SHOW is a special docstring value that hides the command from the help output.
+// The command remains functional but will not appear in the auto-generated help.
 const DONT_SHOW = "#[DON'T SHOW]#"
 
-// Help docstring
+// HELP_DOCS is the docstring used by the built‑in help command.
+// Commands sharing this docstring will be grouped together as aliases.
 const HELP_DOCS = "Generate and print help message"
 
-/*
-Realization of help command.
-Build autodocumentation in terminal for commans.
-
-Docs contains name of command, args (optional and required) and description
-*/
+// help_cmd_handler implements the built‑in help command.
+// It prints a formatted help message listing all visible commands,
+// their arguments (required/optional), and descriptions.
 func help_cmd_handler(p *Parser, _ []string) error {
 	p._print_about()
 	docstrings := []string{}
@@ -118,7 +119,15 @@ func help_cmd_handler(p *Parser, _ []string) error {
 	return nil
 }
 
-// Create Parser object.
+// NewParser creates a new Parser instance.
+// Parameters:
+//   - cli_name: name of the CLI application (used in help).
+//   - about: informational text printed when no command is given.
+//   - help_commands: slice of command names that trigger the help handler.
+//     If nil, defaults to []string{"help", "h"}.
+//   - config: ParserConfig controlling help message formatting.
+//
+// Returns a pointer to the initialized Parser.
 func NewParser(cli_name string, about string, help_commands []string, config ParserConfig) *Parser {
 	p := Parser{
 		_cli_name:   cli_name,
@@ -139,7 +148,14 @@ func NewParser(cli_name string, about string, help_commands []string, config Par
 	return &p
 }
 
-// Add command to parser.
+// AddCommand registers a new command with the parser.
+// Parameters:
+//   - name: command name (string used in CLI).
+//   - handler: function called when the command is invoked.
+//   - docs: description shown in help; use DONT_SHOW to hide the command.
+//   - required_args: slice of required argument names.
+//   - optional_args: slice of optional argument names.
+//   - unlimited_max_args: if true, command accepts any number of trailing arguments.
 func (p *Parser) AddCommand(
 	name string,
 	handler HandlerFuncType,
@@ -162,11 +178,9 @@ func (p *Parser) AddCommand(
 	}
 }
 
-/*
-Find handler of command by name and call this.
-
-Handler args format: [parser: Parser], [args: []string]
-*/
+// _call_command looks up the command by name and executes its handler.
+// It validates argument count against required/optional definitions.
+// Returns an error if the command is unknown or argument count is invalid.
 func (p *Parser) _call_command(name string, args []string) error {
 	cmd, ok := p._commands[name]
 	if !ok {
@@ -181,11 +195,9 @@ func (p *Parser) _call_command(name string, args []string) error {
 	return cmd.handler(p, args)
 }
 
-/*
-Parse args and return arguments, write flags to flags class variable.
-
-Write "" if flag has no value (--flag=""/--flag)
-*/
+// _parse_args extracts flags (--flag, --key=value, --key:value) from the raw argument slice.
+// Flags are stored in p.Flags (value is empty string if no value was given).
+// Returns the remaining non‑flag arguments.
 func (p *Parser) _parse_args(argv []string) []string {
 	p.__print_verbose("Parsing args.")
 	flags, res := utils{}.parse_args(argv)
@@ -193,7 +205,8 @@ func (p *Parser) _parse_args(argv []string) []string {
 	return res
 }
 
-// Print info if [flag] parser flag is true
+// Print outputs a formatted message only if the given flag (e.g., "debug", "verbose") is enabled.
+// The message can contain color shortcodes. Each newline is prefixed with the flag’s name for alignment.
 func (p *Parser) Print(flag string, format string, args ...any) {
 	spaces := strings.Repeat(" ", len(flag))
 	format = strings.ReplaceAll(format, "\n", "\n"+spaces+" [?GN]=>[?RT] ")
@@ -202,23 +215,23 @@ func (p *Parser) Print(flag string, format string, args ...any) {
 	}
 }
 
-// Print info if debug parser flag is true
+// __print_verbose prints a formatted message when the "verbose" flag is enabled.
 func (p *Parser) __print_verbose(format string, args ...any) {
 	p.Print("verbose", format, args...)
 }
 
-// Print info if debug parser flag is true
+// __print_debug prints a formatted message when the "debug" flag is enabled.
 func (p *Parser) __print_debug(format string, args ...any) {
 	p.Print("debug", format, args...)
 }
 
-// Inner function for print about
+// _print_about prints the CLI information (name/version) stored in _about_info.
 func (p *Parser) _print_about() {
 	p.__print_verbose("Print about")
 	color.PrintlnColored(p._about_info)
 }
 
-// Inner function for check and enable system flags
+// __check_flags enables internal verbose/debug flags based on presence in p.Flags.
 func (p *Parser) __check_flags() {
 	_, verbose_ok := p.Flags["verbose"]
 	if verbose_ok {
@@ -234,9 +247,9 @@ func (p *Parser) __check_flags() {
 	)
 }
 
-/*
-Main function of Parser.
-*/
+// Main is the primary entry point of the parser.
+// It parses os.Args[1:], extracts flags, finds the command, and executes the corresponding handler.
+// Returns an error if no command is provided, the command is unknown, or the handler fails.
 func (p *Parser) Main() error {
 	argv := p._parse_args(os.Args[1:])
 	p.__check_flags()
