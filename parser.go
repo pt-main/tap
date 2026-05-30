@@ -81,7 +81,7 @@ func help_cmd_handler(p *Parser, _ []string) error {
 			}
 			commands += "[?RT]"
 			color.PrintlnColored(p._config.help_command_block_fmt, commands)
-			if el.optional_args != nil || el.required_args != nil {
+			if el.optional_args != nil || el.required_args != nil || el.unlimited_max_args {
 				color.PrintlnColored(p._config.help_args_header_block_fmt)
 				args_doc := ""
 				if el.required_args != nil {
