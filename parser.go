@@ -84,7 +84,7 @@ func help_cmd_handler(p *Parser, _ []string) error {
 			if el.optional_args != nil || el.required_args != nil || el.unlimited_max_args {
 				color.PrintlnColored(p._config.help_args_header_block_fmt)
 				args_doc := ""
-				if el.required_args != nil {
+				if el.required_args != nil && len(el.required_args) != 0 {
 					for arg := range el.required_args {
 						args_doc += "<[?RD]" + el.required_args[arg] + "[?RT]>"
 						if arg != (len(el.required_args) - 1) {
@@ -92,7 +92,7 @@ func help_cmd_handler(p *Parser, _ []string) error {
 						}
 					}
 				}
-				if el.optional_args != nil {
+				if el.optional_args != nil && len(el.optional_args) != 0 {
 					if len(args_doc) > 2 {
 						args_doc += ", "
 					}
