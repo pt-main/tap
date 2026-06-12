@@ -52,15 +52,8 @@ func main() {
 ```
 
 Run it:
+<img alt="demo-run" src="https://github.com/user-attachments/assets/38229a2b-918e-4a43-a4f9-6e2727a2afe9" />
 
-```bash
-$ go build -o demo
-$ ./demo hello world
-Hello, world! Args: [world]
-$ ./demo
-Demo CLI v1.0
-Has no command. Type [help] for help.
-```
 
 ## Commands and arguments
 
@@ -145,6 +138,9 @@ You can set color to string with `color.Set`:
 text := color.Set("[?RD]Test")
 ```
 (Reset will be auto pasted in the end of text)
+
+<img width="1362" height="591" alt="Снимок экрана 2026-06-12 в 20 28 55" src="https://github.com/user-attachments/assets/a69c94ea-e034-4018-a0da-485b55aeb9d1" />
+
 
 ## Customising the help output
 
