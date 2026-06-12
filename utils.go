@@ -5,6 +5,32 @@ import "strings"
 // utils is an internal helper type providing argument parsing functionality.
 type utils struct{}
 
+func (u *utils) parse_flag(el string) (string, string) {
+	el = el[2:]
+
+	var key, value string
+	var hasValue bool
+
+	if strings.Contains(el, "=") {
+		parts := strings.SplitN(el, "=", 2)
+		key, value = parts[0], parts[1]
+		hasValue = true
+	} else if strings.Contains(el, ":") {
+		parts := strings.SplitN(el, ":", 2)
+		key, value = parts[0], parts[1]
+		hasValue = true
+	} else {
+		key = el
+		hasValue = false
+	}
+
+	if hasValue {
+		return key, value
+	} else {
+		return key, ""
+	}
+}
+
 // parse_args processes a slice of command-line arguments.
 // It detects flags prefixed with "--" (e.g., "--flag", "--key=value", "--key:value").
 // Flags without a value are stored with an empty string.
@@ -15,29 +41,8 @@ func (u utils) parse_args(argv []string) (map[string]string, []string) {
 
 	for _, el := range argv {
 		if strings.HasPrefix(el, "--") {
-			el = el[2:]
-
-			var key, value string
-			var hasValue bool
-
-			if strings.Contains(el, "=") {
-				parts := strings.SplitN(el, "=", 2)
-				key, value = parts[0], parts[1]
-				hasValue = true
-			} else if strings.Contains(el, ":") {
-				parts := strings.SplitN(el, ":", 2)
-				key, value = parts[0], parts[1]
-				hasValue = true
-			} else {
-				key = el
-				hasValue = false
-			}
-
-			if hasValue {
-				flags[key] = value
-			} else {
-				flags[key] = ""
-			}
+			key, val := u.parse_flag(el)
+			flags[key] = val
 		} else {
 			result = append(result, el)
 		}

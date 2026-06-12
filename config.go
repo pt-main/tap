@@ -2,6 +2,14 @@
 // for commands, flags, colored output, and customizable help messages.
 package tap
 
+// DONT_SHOW is a special docstring value that hides the command from the help output.
+// The command remains functional but will not appear in the auto-generated help.
+const DONT_SHOW = "#[DON'T SHOW]#"
+
+// HELP_DOCS is the docstring used by the built‑in help command.
+// Commands sharing this docstring will be grouped together as aliases.
+const HELP_DOCS = "Generate and print help message"
+
 // ParserConfig defines the formatting templates for the auto-generated help message.
 // Each field is a format string that may contain "%s" placeholders for dynamic content.
 // If an empty string is passed to NewParserConfig, the corresponding default format will be used.
