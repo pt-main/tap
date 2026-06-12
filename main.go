@@ -1,3 +1,3 @@
 package tap
 
-const Version = "0.7.2"
+const Version = "1.1.0"
