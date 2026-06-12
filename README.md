@@ -139,7 +139,7 @@ text := color.Set("[?RD]Test")
 ```
 (Reset will be auto pasted in the end of text)
 
-<img alt="color-demo" src="https://github.com/user-attachments/assets/a69c94ea-e034-4018-a0da-485b55aeb9d1" />
+<img alt="color-demo" src="https://github.com/user-attachments/assets/e4a23776-7165-49c7-a0a8-3c109e61b2e9" />
 
 
 ## Customising the help output
