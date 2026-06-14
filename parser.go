@@ -103,6 +103,15 @@ func (p *Parser) AddCommand(
 	}
 }
 
+func (p *Parser) AddAlias(aliasName, cmdName string) error {
+	cmdMap, ok := p._commands[cmdName]
+	if !ok {
+		return errors.New("Can't add alias: command not found")
+	}
+	p._commands[aliasName] = cmdMap
+	return nil
+}
+
 // Print outputs a formatted message only if the given flag (e.g., "debug", "verbose") is enabled.
 // The message can contain color shortcodes. Each newline is prefixed with the flag’s name for alignment.
 func (p *Parser) Print(flag string, format string, args ...any) {
