@@ -55,7 +55,9 @@ func Set(text string) string {
 		} else {
 			result = strings.ReplaceAll(result, FormColorPlaceholder(code), ansi)
 			if ansi == Colors["RT"] {
-				colorStack = colorStack[:len(colorStack)-1]
+				if len(colorStack)-1 >= 0 {
+					colorStack = colorStack[:len(colorStack)-1]
+				}
 			} else {
 				colorStack = append(colorStack, code)
 			}

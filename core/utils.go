@@ -1,11 +1,11 @@
-package tap
+package core
 
 import "strings"
 
 // utils is an internal helper type providing argument parsing functionality.
-type utils struct{}
+type Utils struct{}
 
-func (u *utils) parse_flag(el string) (string, string) {
+func (u *Utils) ParseFlag(el string) (string, string) {
 	el = el[2:]
 
 	var key, value string
@@ -35,13 +35,13 @@ func (u *utils) parse_flag(el string) (string, string) {
 // It detects flags prefixed with "--" (e.g., "--flag", "--key=value", "--key:value").
 // Flags without a value are stored with an empty string.
 // Returns a map of flag names to their values, and a slice of non-flag arguments.
-func (u utils) parse_args(argv []string) (map[string]string, []string) {
+func (u *Utils) ParseArgs(argv []string) (map[string]string, []string) {
 	flags := make(map[string]string)
 	var result []string
 
 	for _, el := range argv {
 		if strings.HasPrefix(el, "--") {
-			key, val := u.parse_flag(el)
+			key, val := u.ParseFlag(el)
 			flags[key] = val
 		} else {
 			result = append(result, el)

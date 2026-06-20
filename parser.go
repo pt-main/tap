@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/pt-main/tap/color"
+	"github.com/pt-main/tap/core"
 )
 
 // HandlerFuncType defines the signature for command handler functions.
@@ -40,6 +41,7 @@ type Parser struct {
 	_about_info   string
 	_parser_flags map[string]bool
 	Flags         map[string]string
+	Scope         core.ScopeType
 	_commands     map[string]command
 	_config       ParserConfig
 }
@@ -106,7 +108,7 @@ func (p *Parser) AddCommand(
 func (p *Parser) AddAlias(aliasName, cmdName string) error {
 	cmdMap, ok := p._commands[cmdName]
 	if !ok {
-		return errors.New("Can't add alias: command not found")
+		return errors.New("[?RD]Can't add alias[?RT]: command not found")
 	}
 	p._commands[aliasName] = cmdMap
 	return nil
@@ -122,11 +124,8 @@ func (p *Parser) Print(flag string, format string, args ...any) {
 	}
 }
 
-// Main is the primary entry point of the parser.
-// It parses os.Args[1:], extracts flags, finds the command, and executes the corresponding handler.
-// Returns an error if no command is provided, the command is unknown, or the handler fails.
-func (p *Parser) Main() error {
-	argv := p._parse_args(os.Args[1:])
+func (p *Parser) Parse(cmdArgs []string) error {
+	argv := p._parse_args(cmdArgs)
 	p.__check_flags()
 	if len(argv) < 1 {
 		p._print_about()
@@ -141,7 +140,7 @@ func (p *Parser) Main() error {
 			"[?RD]Has no command.[?RT] Type [[?YW]%s[?RT]] for help.",
 			help_name,
 		)
-		return errors.New("No command provided")
+		return errors.New("[?RD]No command provided[?RT]")
 	}
 	p.__print_verbose("Finding and calling command...")
 	cmd := argv[0]
@@ -153,9 +152,23 @@ func (p *Parser) Main() error {
 	err := p._call_command(cmd, args)
 	p.__print_verbose("Return after call: %v", err)
 	if err != nil {
-		p.Print("debug", "'%s' cmd handler call with '%s' args end with error: %v", cmd, args, err)
-		fmt.Fprintln(os.Stderr, "Error:", err)
-		return fmt.Errorf("Command %q failed: %w", cmd, err)
+		err = p._call_basic(argv)
+		if err != nil {
+			p.Print("debug", "'%s' cmd handler call with '%s' args end with error: %v", cmd, args, err)
+			fmt.Fprintln(os.Stderr, "Error:", err)
+			return fmt.Errorf("[?RD]Command [?BBK]%q[?RD] failed: \n%w", cmd, err)
+		}
 	}
 	return nil
+}
+
+// Main is the primary entry point of the parser.
+// It parses os.Args[1:], extracts flags, finds the command, and executes the corresponding handler.
+// Returns an error if no command is provided, the command is unknown, or the handler fails.
+func (p *Parser) Main() error {
+	return fmt.Errorf("[?RD]Exec error[?RT]: \n%v",
+		strings.ReplaceAll(
+			color.Set(p.Parse(os.Args[1:]).Error()),
+			"\n", "\n[?RD]->[?RT]    [?BBK]|[?RT]",
+		))
 }

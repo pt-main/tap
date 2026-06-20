@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/pt-main/tap/color"
+	"github.com/pt-main/tap/core"
 )
 
 // _call_command looks up the command by name and executes its handler.
@@ -23,12 +24,26 @@ func (p *Parser) _call_command(name string, args []string) error {
 	return cmd.handler(p, args)
 }
 
+func (p *Parser) _call_basic(args []string) error {
+	cmd, ok := p._commands["_"]
+	if !ok {
+		return fmt.Errorf("Bad input.")
+	}
+	full_length := len(cmd.optional_args) + len(cmd.required_args)
+	cond1 := (len(args) > full_length) && (!cmd.unlimited_max_args)
+	cond2 := len(args) < len(cmd.required_args)
+	if cond1 || cond2 {
+		return fmt.Errorf("Invalid argument length: %d.", len(args))
+	}
+	return cmd.handler(p, args)
+}
+
 // _parse_args extracts flags (--flag, --key=value, --key:value) from the raw argument slice.
 // Flags are stored in p.Flags (value is empty string if no value was given).
 // Returns the remaining non‑flag arguments.
 func (p *Parser) _parse_args(argv []string) []string {
 	p.__print_verbose("Parsing args.")
-	flags, res := utils{}.parse_args(argv)
+	flags, res := (&core.Utils{}).ParseArgs(argv)
 	p.Flags = flags
 	return res
 }
@@ -60,7 +75,7 @@ func (p *Parser) __check_flags() {
 		p._parser_flags["debug"] = true
 	}
 	p.__print_verbose(
-		"Check flags by verbose and debug. \nFlags: %v, Parser flags: %v",
+		"Check flags by verbose and debug. \n    Flags: %v, \n    Parser flags: %v",
 		p.Flags, p._parser_flags,
 	)
 }

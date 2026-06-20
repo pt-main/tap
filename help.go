@@ -65,9 +65,11 @@ func help_cmd_handler(p *Parser, _ []string) error {
 			}
 			commands += "[?RT]"
 			color.PrintlnColored(p._config.help_command_block_fmt, commands)
-			color.PrintlnColored(p._config.help_args_header_block_fmt)
 			args_doc := help_form_args(el)
-			color.PrintlnColored(p._config.help_args_data_block_fmt, args_doc)
+			if args_doc != "" {
+				color.PrintlnColored(p._config.help_args_header_block_fmt)
+				color.PrintlnColored(p._config.help_args_data_block_fmt, args_doc)
+			}
 			color.PrintlnColored(p._config.help_docs_header_block_fmt)
 			for line := range docs {
 				color.PrintlnColored(p._config.help_docs_data_block_fmt, docs[line])
