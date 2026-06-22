@@ -23,20 +23,45 @@ const (
 	brightCyan    = "\033[96m"
 	brightWhite   = "\033[97m"
 
+	// Background colours (standard)
+	blackBg   = "\033[40m"
+	redBg     = "\033[41m"
+	greenBg   = "\033[42m"
+	yellowBg  = "\033[43m"
+	blueBg    = "\033[44m"
+	magentaBg = "\033[45m"
+	cyanBg    = "\033[46m"
+	whiteBg   = "\033[47m"
+
+	// Background colours (bright)
+	brightBlackBg   = "\033[100m"
+	brightRedBg     = "\033[101m"
+	brightGreenBg   = "\033[102m"
+	brightYellowBg  = "\033[103m"
+	brightBlueBg    = "\033[104m"
+	brightMagentaBg = "\033[105m"
+	brightCyanBg    = "\033[106m"
+	brightWhiteBg   = "\033[107m"
+
 	reset     = "\033[0m"
 	bold      = "\033[1m"
 	underline = "\033[4m"
 )
 
 // Colors maps short color codes (uppercase) to ANSI escape sequences.
-// Supported codes: BOLD/BD, UNDERLINE/UE, RESET/RT,
-// basic colors (BLACK/BK, RED/RD, GREEN/GN, YELLOW/YW, BLUE/BE, MAGENTA/MA, CYAN/CN),
-// and their bright variants (BBLACK/BBK, BRED/BRD, BGREEN/BGN, BYELLOW/BYW, BBLUE/BBE, BMAGENTA/BMA, BCYAN/BCN).
+// Supported codes:
+//   - Text foreground: BOLD/BD, UNDERLINE/UE, RESET/RT,
+//     basic colours (BLACK/BK, RED/RD, GREEN/GN, YELLOW/YW, BLUE/BE, MAGENTA/MA, CYAN/CN),
+//     bright variants (BBLACK/BBK, BRED/BRD, BGREEN/BGN, BYELLOW/BYW, BBLUE/BBE, BMAGENTA/BMA, BCYAN/BCN)
+//   - Background colours (full name: BACK<COLOUR>, short: BK<SHORT>):
+//     BACKBLACK/BKBK, BACKRED/BKRD, BACKGREEN/BKGN, BACKYELLOW/BKYW, BACKBLUE/BKBE, BACKMAGENTA/BKMA, BACKCYAN/BKCN,
+//     and bright variants: BACKBBLACK/BKBBK, BACKBRED/BKBRD, BACKBGREEN/BKBGN, BACKBYELLOW/BKBYW, BACKBBLUE/BKBBE, BACKBMAGENTA/BKBMA, BACKBCYAN/BKBCN.
 var Colors = map[string]string{
 	"BOLD": bold, "BD": bold,
 	"UNDERLINE": underline, "UE": underline,
 	"RESET": reset, "RT": reset,
 
+	// Text foreground
 	"BLACK": black, "BK": black,
 	"RED": red, "RD": red,
 	"GREEN": green, "GN": green,
@@ -52,4 +77,22 @@ var Colors = map[string]string{
 	"BBLUE": brightBlue, "BBE": brightBlue,
 	"BMAGENTA": brightMagenta, "BMA": brightMagenta,
 	"BCYAN": brightCyan, "BCN": brightCyan,
+
+	// Background colours (standard)
+	"BACKBLACK": blackBg, "BKBK": blackBg,
+	"BACKRED": redBg, "BKRD": redBg,
+	"BACKGREEN": greenBg, "BKGN": greenBg,
+	"BACKYELLOW": yellowBg, "BKYW": yellowBg,
+	"BACKBLUE": blueBg, "BKBE": blueBg,
+	"BACKMAGENTA": magentaBg, "BKMA": magentaBg,
+	"BACKCYAN": cyanBg, "BKCN": cyanBg,
+
+	// Background colours (bright)
+	"BACKBBLACK": brightBlackBg, "BKBBK": brightBlackBg,
+	"BACKBRED": brightRedBg, "BKBRD": brightRedBg,
+	"BACKBGREEN": brightGreenBg, "BKBGN": brightGreenBg,
+	"BACKBYELLOW": brightYellowBg, "BKBYW": brightYellowBg,
+	"BACKBBLUE": brightBlueBg, "BKBBE": brightBlueBg,
+	"BACKBMAGENTA": brightMagentaBg, "BKBMA": brightMagentaBg,
+	"BACKBCYAN": brightCyanBg, "BKBCN": brightCyanBg,
 }

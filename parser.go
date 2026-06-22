@@ -108,7 +108,7 @@ func (p *Parser) AddCommand(
 func (p *Parser) AddAlias(aliasName, cmdName string) error {
 	cmdMap, ok := p._commands[cmdName]
 	if !ok {
-		return errors.New("[?RD]Can't add alias[?RT]: command not found")
+		return errors.New("[?RD]Can't add alias[?RT]: \nCommand not found")
 	}
 	p._commands[aliasName] = cmdMap
 	return nil
@@ -155,7 +155,6 @@ func (p *Parser) Parse(cmdArgs []string) error {
 		err = p._call_basic(argv)
 		if err != nil {
 			p.Print("debug", "'%s' cmd handler call with '%s' args end with error: %v", cmd, args, err)
-			fmt.Fprintln(os.Stderr, "Error:", err)
 			return fmt.Errorf("[?RD]Command [?BBK]%q[?RD] failed: \n%w", cmd, err)
 		}
 	}
@@ -166,9 +165,16 @@ func (p *Parser) Parse(cmdArgs []string) error {
 // It parses os.Args[1:], extracts flags, finds the command, and executes the corresponding handler.
 // Returns an error if no command is provided, the command is unknown, or the handler fails.
 func (p *Parser) Main() error {
-	return fmt.Errorf("[?RD]Exec error[?RT]: \n%v",
-		strings.ReplaceAll(
-			color.Set(p.Parse(os.Args[1:]).Error()),
-			"\n", "\n[?RD]->[?RT]    [?BBK]|[?RT]",
-		))
+	err := p.Parse(os.Args[1:])
+	if err != nil {
+		errstart := "[?RT][?YW]->[?RT]    [?BBK]|[?RT] "
+		return fmt.Errorf(color.Set(
+			fmt.Sprintf("[?YW]Execution stopped[?RT]: \n"+errstart+"%v",
+				strings.ReplaceAll(
+					err.Error(),
+					"\n", "\n"+errstart,
+				),
+			)))
+	}
+	return fmt.Errorf("")
 }

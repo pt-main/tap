@@ -7,6 +7,13 @@ import (
 	"github.com/pt-main/tap/core"
 )
 
+func isArgsInalid(args []string, cmd command) bool {
+	full_length := len(cmd.optional_args) + len(cmd.required_args)
+	cond1 := (len(args) > full_length) && (!cmd.unlimited_max_args)
+	cond2 := len(args) < len(cmd.required_args)
+	return cond1 || cond2
+}
+
 // _call_command looks up the command by name and executes its handler.
 // It validates argument count against required/optional definitions.
 // Returns an error if the command is unknown or argument count is invalid.
@@ -15,10 +22,7 @@ func (p *Parser) _call_command(name string, args []string) error {
 	if !ok {
 		return fmt.Errorf("Unknown command: %s", name)
 	}
-	full_length := len(cmd.optional_args) + len(cmd.required_args)
-	cond1 := (len(args) > full_length) && (!cmd.unlimited_max_args)
-	cond2 := len(args) < len(cmd.required_args)
-	if cond1 || cond2 {
+	if isArgsInalid(args, cmd) {
 		return fmt.Errorf("Invalid argument length: %d.", len(args))
 	}
 	return cmd.handler(p, args)
@@ -29,10 +33,7 @@ func (p *Parser) _call_basic(args []string) error {
 	if !ok {
 		return fmt.Errorf("Bad input.")
 	}
-	full_length := len(cmd.optional_args) + len(cmd.required_args)
-	cond1 := (len(args) > full_length) && (!cmd.unlimited_max_args)
-	cond2 := len(args) < len(cmd.required_args)
-	if cond1 || cond2 {
+	if isArgsInalid(args, cmd) {
 		return fmt.Errorf("Invalid argument length: %d.", len(args))
 	}
 	return cmd.handler(p, args)
