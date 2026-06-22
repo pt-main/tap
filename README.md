@@ -74,6 +74,14 @@ p.AddCommand(
 - **optionalArgs** - shown as `[arg]` in help.
 - **unlimitedMaxArgs** - if `true`, the command accepts any number of trailing arguments.
 
+You can create aliases for existing commands using `AddAlias`:
+
+```go
+p.AddCommand("help", helpHandler, tap.HELP_DOCS, nil, nil, false)
+p.AddAlias("h", "help")  // now "h" works exactly like "help"
+```
+The alias inherits all properties (handler, arguments, docstring) from the original command.
+
 ### Example
 
 ```go
@@ -110,6 +118,18 @@ func myHandler(p *tap.Parser, args []string) error {
     return nil
 }
 ```
+
+Use `p.Print(flag, format, ...)` to output messages only when a specific flag (e.g., `--verbose` or `--debug`) is present:
+
+```go
+func myHandler(p *tap.Parser, args []string) error {
+    p.Print("verbose", "Starting with args: %v", args)
+    p.Print("debug", "Detailed debug info")
+    // ...
+}
+```
+
+The output is automatically prefixed with the flag name and coloured.
 
 ## Colors
 
