@@ -32,13 +32,16 @@ func FormColorPlaceholder(code string) string {
 // the codes are removed entirely. The ANSI reset code is automatically
 // appended at the end when colors are enabled.
 //
-// Write 'BACK' (or '<') code to append last colors.
+// Use 'BACK' (or '<') code to append last colors.
+//
+// Use 'SRESET' (or 'SRT') code to reset color stack.
 //
 // Example:
 //
 //	"[?BE][?UE]test [?BD]bold [?RT][?<]string" equal to "[?BE]test [?BD]bold [?RT][?BE][?UE]string"
 func Set(text string) string {
 	BackVariants := []string{"BACK", "<"}
+	SrtVariants := []string{"SRESET", "SRT"}
 	result := text
 	if !ColorEnabled {
 		return ReplaceColors(result)
@@ -51,6 +54,8 @@ func Set(text string) string {
 				replace += Colors[code]
 			}
 			result = strings.Replace(result, code, replace, 1)
+		} else if slices.Contains(SrtVariants, code) {
+			result = strings.Replace(result, code, "", 1)
 			colorStack = []string{}
 		} else {
 			result = strings.ReplaceAll(result, FormColorPlaceholder(code), ansi)

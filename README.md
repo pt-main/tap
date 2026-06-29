@@ -7,19 +7,21 @@
 go get github.com/pt-main/tap
 ```
 
-**Tap** is a lightweight, zero-dependency library for building beautiful CLI applications in Go.  
-It features a simple command-based API, automatic `--flag` parsing, colored output, and fully customisable help messages.
+**Tap** is a lightweight library for building beautiful CLI applications in Go.  
+It features a simple command-based API, automatic `--flag` parsing, colored output, interactive keyboard dialogs, in-place terminal rewriting, and fully customisable help messages.
 
 ## Features
 
 - **Commands** with required / optional arguments and unlimited trailing args
 - **Flag parsing** - `--flag`, `--flag=value`, `--flag:value`
 - **Built‑in colour support** - shortcodes like `[?GN]`, `[?RD]`, `[?YW]` - easy and readable
+- **Background colours & colour stack** - advanced ANSI control for rich layouts
 - **Auto‑generated help** - groups aliases, shows arguments, respects custom format
-- **Fully configurable** - change the look of `help` via `ParserConfig`
+- **Fully configurable** - change the look of `help` via `ParserConfig`, add your colors to `color.Colors`, disable colors with `color.ColorEnabled = false`
 - **Hide commands** from help using `DONT_SHOW` docstring
 - **Verbose / debug** flags - built‑in `--verbose` and `--debug` with conditional printing
-- **Colours can be disabled** globally (`color.ColorEnabled = false`)
+- **Interactive dialogs** - selection menus (using input/selecting)
+- **In-place terminal rewriting** - update previous output without scrolling
 
 ## Quick start
 
@@ -72,7 +74,7 @@ p.AddCommand(
 
 - **requiredArgs** - shown as `<arg>` in help. The command fails if they are missing.
 - **optionalArgs** - shown as `[arg]` in help.
-- **unlimitedMaxArgs** - if `true`, the command accepts any number of trailing arguments.
+- **unlimitedMaxArgs** - if `true`, the command accepts any number of trailing arguments. shown as `...` in help.
 
 You can create aliases for existing commands using `AddAlias`:
 
@@ -90,13 +92,13 @@ p.AddCommand("copy",
     "Copy source to destination",
     []string{"src", "dst"},  // required
     []string{"force"},       // optional
-    false,
+    true,
 )
 ```
 
 Help output would show:
 ```
-copy <src>, <dst>, [force]
+copy <src>, <dst>, [force]...
 ```
 
 ## Flags
@@ -124,7 +126,7 @@ Use `p.Print(flag, format, ...)` to output messages only when a specific flag (e
 ```go
 func myHandler(p *tap.Parser, args []string) error {
     p.Print("verbose", "Starting with args: %v", args)
-    p.Print("debug", "Detailed debug info")
+    p.Print("debug", "Debug info...")
     // ...
 }
 ```
@@ -132,6 +134,8 @@ func myHandler(p *tap.Parser, args []string) error {
 The output is automatically prefixed with the flag name and coloured.
 
 ## Colors
+
+<img alt="color-demo" src="https://github.com/user-attachments/assets/d5dec876-7b1d-4fcc-8ec3-9465c095a94c" />
 
 You can just write `[?COLOR]` with uppercased color name from list to set color. Like `[?RED]` for red.
 
@@ -159,9 +163,56 @@ text := color.Set("[?RD]Test")
 ```
 (Reset will be auto pasted in the end of text)
 
-<img alt="color-demo" src="https://github.com/user-attachments/assets/d5dec876-7b1d-4fcc-8ec3-9465c095a94c" />
+### Background colours
+
+Background colours use the `BACK` prefix or `BK` shortcode:
+
+```go
+color.PrintlnColored("[?BKRD] ERROR: [?RT] error text...")
+```
+
+Available all colors for text except bold and underlinne.
+
+### Colour stack
+
+You can restore the previous colour with `[?<]` (or `[?BACK]`) and clear the stack with `[?SRT]` (or `[?SRESET]`):
+
+```go
+color.PrintlnColored("[?BE][?UE]test [?BD]bold [?RT][?<]restored")
+```
 
 
+
+## Interactive dialogs
+
+Tap includes a small utility for interactive user prompts. It supports arrow-key navigation and validated text input.
+
+```go
+import "github.com/pt-main/tap/utils"
+
+// Arrow-key selection
+dialogue := utils.NewDialogue(utils.ArrowsDialogueType, "[?CN]Select action:[?RT]")
+choice, err := dialogue.Run([]string{"install", "update", "remove"})
+// Navigate with up/down, press enter to confirm, esc to cancel.
+```
+
+For simple typed input with validation against allowed variants:
+
+```go
+inputDlg := utils.NewDialogue(utils.InputDialogueType, "Enter mode (fast/slow): ")
+mode, err := inputDlg.Run([]string{"fast", "slow"})
+```
+
+## Rewriting terminal output
+
+For in-place updates (progress bars, live menus, spinners) use `Rewriter`:
+
+```go
+rw := utils.NewRewriter()
+rw.Write("[?YW]Loading... 0%[?RT]")
+// ... later ...
+rw.Write("[?GN]Loading... 100%[?RT]")  // replaces the previous line without scrolling
+```
 
 ## Customising the help output
 
@@ -187,8 +238,9 @@ If you pass an empty string for any field, the default (coloured, nice looking) 
 If multiple commands share the **same docstring**, they are displayed together in help:
 
 ```go
-p.AddCommand("help", helpHandler, tap.HELP_DOCS, nil, nil, false)
-p.AddCommand("h", helpHandler, tap.HELP_DOCS, nil, nil, false)
+helpDocs := "Show help"
+p.AddCommand("help", helpHandler, helpDocd, nil, nil, false)
+p.AddCommand("h", helpHandler, helpDocd, nil, nil, false) // Equals to p.AddAlias("h", help)
 ```
 
 Help shows: `[help / h]`
@@ -245,4 +297,3 @@ func main() {
 ## License
 
 MIT - see [LICENSE](LICENSE) file.  
-Author: Pt

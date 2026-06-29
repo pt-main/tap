@@ -78,7 +78,7 @@ var Colors = map[string]string{
 	"BMAGENTA": brightMagenta, "BMA": brightMagenta,
 	"BCYAN": brightCyan, "BCN": brightCyan,
 
-	// Background colours (standard)
+	// Background colours
 	"BACKBLACK": blackBg, "BKBK": blackBg,
 	"BACKRED": redBg, "BKRD": redBg,
 	"BACKGREEN": greenBg, "BKGN": greenBg,
@@ -87,7 +87,6 @@ var Colors = map[string]string{
 	"BACKMAGENTA": magentaBg, "BKMA": magentaBg,
 	"BACKCYAN": cyanBg, "BKCN": cyanBg,
 
-	// Background colours (bright)
 	"BACKBBLACK": brightBlackBg, "BKBBK": brightBlackBg,
 	"BACKBRED": brightRedBg, "BKBRD": brightRedBg,
 	"BACKBGREEN": brightGreenBg, "BKBGN": brightGreenBg,
@@ -95,4 +94,8 @@ var Colors = map[string]string{
 	"BACKBBLUE": brightBlueBg, "BKBBE": brightBlueBg,
 	"BACKBMAGENTA": brightMagentaBg, "BKBMA": brightMagentaBg,
 	"BACKBCYAN": brightCyanBg, "BKBCN": brightCyanBg,
+
+	// Other
+	"BACK": "", "<": "",
+	"SRESET": "", "SRT": "",
 }
