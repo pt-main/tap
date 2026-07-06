@@ -6,6 +6,13 @@ package tap
 // The command remains functional but will not appear in the auto-generated help.
 const DONT_SHOW = "#[DON'T SHOW]#"
 
+// DEFAULT_CMD is a reserved command name.
+// It is used when no command is specified as the first argument,
+// allowing your CLI to be invoked in two ways: cli args... (implicit default)
+// or cli cmd args... (explicit command).
+// Note: documentation of default command is displayed after about message.
+const DEFAULT_CMD = "#[DEFAULT CMD]#"
+
 // HELP_DOCS is the docstring used by the built‑in help command.
 // Commands sharing this docstring will be grouped together as aliases.
 const HELP_DOCS = "Generate and print help message"

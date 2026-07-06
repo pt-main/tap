@@ -46,7 +46,7 @@ func help_cmd_handler(p *Parser, _ []string) error {
 	for key := range p._commands {
 		el := p._commands[key]
 		docs := strings.Split(el.docstring, "\n")
-		if el.docstring == DONT_SHOW {
+		if el.docstring == DONT_SHOW || el.name == "_" {
 			docstrings = append(docstrings, el.docstring)
 		}
 		if slices.Index(docstrings, el.docstring) == -1 {

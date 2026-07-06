@@ -29,7 +29,7 @@ func (p *Parser) _call_command(name string, args []string) error {
 }
 
 func (p *Parser) _call_basic(args []string) error {
-	cmd, ok := p._commands["_"]
+	cmd, ok := p._commands[DEFAULT_CMD]
 	if !ok {
 		return fmt.Errorf("Bad input.")
 	}
@@ -63,6 +63,7 @@ func (p *Parser) __print_debug(format string, args ...any) {
 func (p *Parser) _print_about() {
 	p.__print_verbose("Print about")
 	color.PrintlnColored(p._about_info)
+	println(color.Set(p._commands[DEFAULT_CMD].docstring))
 }
 
 // __check_flags enables internal verbose/debug flags based on presence in p.Flags.
