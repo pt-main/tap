@@ -20,7 +20,9 @@ func isArgsInalid(args []string, cmd command) bool {
 func (p *Parser) _call_command(name string, args []string) error {
 	cmd, ok := p._commands[name]
 	if !ok {
-		return fmt.Errorf("Unknown command: %s", name)
+		if err := p._call_subcommand(name, args); err != nil {
+			return err
+		}
 	}
 	if isArgsInalid(args, cmd) {
 		return fmt.Errorf("Invalid argument length: %d.", len(args))
@@ -37,6 +39,14 @@ func (p *Parser) _call_basic(args []string) error {
 		return fmt.Errorf("Invalid argument length: %d.", len(args))
 	}
 	return cmd.handler(p, args)
+}
+
+func (p *Parser) _call_subcommand(name string, args []string) error {
+	cmd, ok := p._sub_commands[name]
+	if !ok {
+		return fmt.Errorf("Unknown command: %s", name)
+	}
+	return cmd.Parse(args)
 }
 
 // _parse_args extracts flags (--flag, --key=value, --key:value) from the raw argument slice.

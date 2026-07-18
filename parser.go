@@ -43,6 +43,7 @@ type Parser struct {
 	Flags         map[string]string
 	Scope         core.ScopeType
 	_commands     map[string]command
+	_sub_commands map[string]*Parser
 	_config       ParserConfig
 }
 
@@ -62,9 +63,10 @@ func NewParser(cli_name string, about string, help_commands []string, config Par
 		_parser_flags: map[string]bool{
 			"debug": false, "verbose": false,
 		},
-		_commands: map[string]command{},
-		Flags:     map[string]string{},
-		_config:   config,
+		_commands:     map[string]command{},
+		_sub_commands: make(map[string]*Parser),
+		Flags:         map[string]string{},
+		_config:       config,
 	}
 	if help_commands == nil {
 		help_commands = []string{"help", "h"}
@@ -105,6 +107,33 @@ func (p *Parser) AddCommand(
 	}
 }
 
+// AddSubCommand registers a nested sub-parser for a given subcommand name.
+//
+// This method stores the provided Parser instance under the specified name,
+// automatically integrate it into the main command dispatch flow.
+//
+// Parameters:
+//   - name: the subcommand name.
+//   - parser: the Parser instance that will handle the subcommand.
+func (p *Parser) AddSubcommand(name string, parser *Parser) {
+	p._sub_commands[name] = parser
+}
+
+// SubCommand retrieves a previously registered sub-parser by name.
+//
+// It returns the Parser pointer and a nil error if the name exists;
+// otherwise, it returns an error describing the invalid name.
+func (p *Parser) Subcommand(name string) (err error, pr *Parser) {
+	var ok bool
+	pr, ok = p._sub_commands[name]
+	if !ok {
+		err = fmt.Errorf("Invalid subcommand name: %v", name)
+		return
+	}
+	return
+}
+
+// Add alias for command.
 func (p *Parser) AddAlias(aliasName, cmdName string) error {
 	cmdMap, ok := p._commands[cmdName]
 	if !ok {
@@ -124,6 +153,7 @@ func (p *Parser) Print(flag string, format string, args ...any) {
 	}
 }
 
+// Parse args.
 func (p *Parser) Parse(cmdArgs []string) error {
 	argv := p._parse_args(cmdArgs)
 	p.__check_flags()

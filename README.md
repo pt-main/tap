@@ -19,6 +19,7 @@ It features a simple command-based API, automatic `--flag` parsing, colored outp
 - **Auto‑generated help** - groups aliases, shows arguments, respects custom format
 - **Fully configurable** - change the look of `help` via `ParserConfig`, add your colors to `color.Colors`, disable colors with `color.ColorEnabled = false`
 - **Hide commands** from help using `DONT_SHOW` docstring
+- **Subcommands** (inner parsers)
 - **Verbose / debug** flags - built‑in `--verbose` and `--debug` with conditional printing
 - **Interactive dialogs** - selection menus (using input/selecting)
 - **In-place terminal rewriting** - update previous output without scrolling
@@ -43,7 +44,7 @@ func helloHandler(p *tap.Parser, args []string) error {
 }
 
 func main() {
-	cfg := tap.NewParserConfig("", "", "", "", "", "") // defaults
+	cfg := tap.DefaultParserConfig()
 	p := tap.NewParser("demo", "Demo CLI v1.0", nil, cfg)
 	p.AddCommand("hello", helloHandler, "Prints a friendly greeting", nil, nil, true)
 
@@ -92,7 +93,7 @@ p.AddCommand("copy",
     "Copy source to destination",
     []string{"src", "dst"},  // required
     []string{"force"},       // optional
-    true,
+    true,                    // unlimited
 )
 ```
 
@@ -100,6 +101,26 @@ Help output would show:
 ```
 copy <src>, <dst>, [force]...
 ```
+
+Use `tap.DONT_SHOW` as the docstring:
+```go
+p.AddCommand("internal", internalHandler, tap.DONT_SHOW, nil, nil, false)
+```
+This command will work but will never appear in the help output.
+
+Use `tap.DEFAULT_CMD` as name to create handler working when `args[0]` is not command (for usage like `cli_name [args...]`, not `cli_name command_name [args...]`). Documentation of 'default' command shows after about.
+
+## Sub commands
+
+You can create sub-commands: 
+
+```go
+p.AddSubcommand(name, tap.NewParser(...))
+```
+
+In call subcomand parser calls `subcommand.Parse(args)`.
+
+Help show only name and about of subcommand.
 
 ## Flags
 
@@ -182,7 +203,6 @@ color.PrintlnColored("[?BE][?UE]test [?BD]bold [?RT][?<]restored")
 ```
 
 
-
 ## Interactive dialogs
 
 Tap includes a small utility for interactive user prompts. It supports arrow-key navigation and validated text input.
@@ -245,16 +265,6 @@ p.AddCommand("h", helpHandler, helpDocd, nil, nil, false) // Equals to p.AddAlia
 
 Help shows: `[help / h]`
 
-## Hiding commands from help
-
-Use `tap.DONT_SHOW` as the docstring:
-
-```go
-p.AddCommand("internal", internalHandler, tap.DONT_SHOW, nil, nil, false)
-```
-
-This command will work but will never appear in the help output.
-
 ## Full example
 
 A minimal but complete CLI with multiple commands:
@@ -270,7 +280,7 @@ import (
 )
 
 func main() {
-    cfg := tap.NewParserConfig("", "", "", "", "", "")
+    cfg := tap.DefaultParserConfig()
     p := tap.NewParser("myapp", "My application v0.1", nil, cfg)
 
     p.AddCommand("greet", func(p *tap.Parser, args []string) error {

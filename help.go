@@ -46,7 +46,7 @@ func help_cmd_handler(p *Parser, _ []string) error {
 	for key := range p._commands {
 		el := p._commands[key]
 		docs := strings.Split(el.docstring, "\n")
-		if el.docstring == DONT_SHOW || el.name == "_" {
+		if el.docstring == DONT_SHOW || el.name == DEFAULT_CMD {
 			docstrings = append(docstrings, el.docstring)
 		}
 		if slices.Index(docstrings, el.docstring) == -1 {
@@ -77,6 +77,15 @@ func help_cmd_handler(p *Parser, _ []string) error {
 			color.PrintlnColored(p._config.help_end_block_fmt)
 			docstrings = append(docstrings, el.docstring)
 		}
+	}
+	for key := range p._sub_commands {
+		el := p._sub_commands[key]
+		color.PrintlnColored(p._config.help_subcommand_block_fmt, el._cli_name)
+		color.PrintlnColored(p._config.help_docs_header_block_fmt)
+		for _, line := range strings.Split(el._about_info, "\n") {
+			color.PrintlnColored(p._config.help_docs_data_block_fmt, line)
+		}
+		color.PrintlnColored(p._config.help_end_block_fmt)
 	}
 	return nil
 }

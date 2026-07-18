@@ -22,6 +22,7 @@ const HELP_DOCS = "Generate and print help message"
 // If an empty string is passed to NewParserConfig, the corresponding default format will be used.
 type ParserConfig struct {
 	help_command_block_fmt     string
+	help_subcommand_block_fmt  string
 	help_args_header_block_fmt string
 	help_args_data_block_fmt   string
 	help_docs_header_block_fmt string
@@ -33,6 +34,7 @@ type ParserConfig struct {
 // Any empty string parameter will be replaced with a sensible default.
 // Parameters:
 //   - help_command_block_fmt: format for the command name block (e.g., "╭─────── Command [%s]").
+//   - help_subcommand_block_fmt: format for the subcommand name block (e.g., "╭─────── Subcommand [%s]").
 //   - help_args_header_block_fmt: format for the arguments section header.
 //   - help_args_data_block_fmt: format for each argument line.
 //   - help_docs_header_block_fmt: format for the description section header.
@@ -42,6 +44,7 @@ type ParserConfig struct {
 // Returns a populated ParserConfig.
 func NewParserConfig(
 	help_command_block_fmt string,
+	help_subcommand_block_fmt string,
 	help_args_header_block_fmt string,
 	help_args_data_block_fmt string,
 	help_docs_header_block_fmt string,
@@ -50,6 +53,9 @@ func NewParserConfig(
 ) ParserConfig {
 	if help_command_block_fmt == "" {
 		help_command_block_fmt = "[?GN]╭─────── Command[?RT] [%s]"
+	}
+	if help_subcommand_block_fmt == "" {
+		help_subcommand_block_fmt = "[?GN]╭─────── Subommand[?RT] [%s]"
 	}
 	if help_args_header_block_fmt == "" {
 		help_args_header_block_fmt = "[?GN]⎬─ Args:[?RT]"
@@ -69,10 +75,16 @@ func NewParserConfig(
 
 	return ParserConfig{
 		help_command_block_fmt:     help_command_block_fmt,
+		help_subcommand_block_fmt:  help_subcommand_block_fmt,
 		help_args_header_block_fmt: help_args_header_block_fmt,
 		help_args_data_block_fmt:   help_args_data_block_fmt,
 		help_docs_header_block_fmt: help_docs_header_block_fmt,
 		help_docs_data_block_fmt:   help_docs_data_block_fmt,
 		help_end_block_fmt:         help_end_block_fmt,
 	}
+}
+
+// Create default parser config.
+func DefaultParserConfig() ParserConfig {
+	return NewParserConfig("", "", "", "", "", "", "")
 }
