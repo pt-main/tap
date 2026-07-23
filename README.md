@@ -1,7 +1,6 @@
 # Tap - Terminal Argument Parsing
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/pt-main/tap.svg)](https://pkg.go.dev/github.com/pt-main/tap)
-[![Go Report Card](https://goreportcard.com/badge/github.com/pt-main/tap)](https://goreportcard.com/report/github.com/pt-main/tap)
 
 ```bash
 go get github.com/pt-main/tap
