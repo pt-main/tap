@@ -1,0 +1,10 @@
+[package]
+name = "tap-rs"
+version = "0.3.0"
+edition = "2024"
+
+[dependencies]
+
+[lib]
+name = "tap"
+path = "src/tap/mod.rs"
