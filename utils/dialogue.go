@@ -104,9 +104,9 @@ func (df *DialogueFormat) RunCheckVariant(variants []string, variant string) (bo
 }
 
 // NewDialogue creates a DialogueFormat with the given type and prompt text.
-func NewDialogue(dtype DialogueType, form string) *DialogueFormat {
+func NewDialogue(dtype DialogueType, prompt string) *DialogueFormat {
 	return &DialogueFormat{
 		Type: dtype,
-		Text: form,
+		Text: prompt,
 	}
 }

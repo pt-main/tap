@@ -1,7 +1,6 @@
 package color
 
 import (
-	"slices"
 	"strings"
 )
 
@@ -27,10 +26,21 @@ func FormColorPlaceholder(code string) string {
 	return "[?" + strings.ToUpper(code) + "]"
 }
 
+type Setter struct {
+	ColorEnabled *bool
+	AddReset     bool
+}
+
+func NewSetter(AddReset bool, ColorEnabled *bool) *Setter {
+	return &Setter{
+		ColorEnabled: ColorEnabled,
+		AddReset:     AddReset,
+	}
+}
+
 // Set replaces short color codes like [?RED] or [?GN] in the input string
 // with the corresponding ANSI escape sequences. If ColorEnabled is false,
-// the codes are removed entirely. The ANSI reset code is automatically
-// appended at the end when colors are enabled.
+// the codes are removed entirely.
 //
 // Use 'BACK' (or '<') code to append last colors.
 //
@@ -39,37 +49,23 @@ func FormColorPlaceholder(code string) string {
 // Example:
 //
 //	"[?BE][?UE]test [?BD]bold [?RT][?<]string" equal to "[?BE]test [?BD]bold [?RT][?BE][?UE]string"
-func Set(text string) string {
-	BackVariants := []string{"BACK", "<"}
-	SrtVariants := []string{"SRESET", "SRT"}
+func (s *Setter) Set(text string) string {
 	result := text
-	if !ColorEnabled {
+	if !(*s.ColorEnabled) {
 		return ReplaceColors(result)
 	}
-	colorStack := []string{}
 	for code, ansi := range Colors {
-		if slices.Contains(BackVariants, code) {
-			replace := ""
-			for _, code := range colorStack {
-				replace += Colors[code]
-			}
-			result = strings.Replace(result, code, replace, 1)
-		} else if slices.Contains(SrtVariants, code) {
-			result = strings.Replace(result, code, "", 1)
-			colorStack = []string{}
-		} else {
-			result = strings.ReplaceAll(result, FormColorPlaceholder(code), ansi)
-			if ansi == Colors["RT"] {
-				if len(colorStack)-1 >= 0 {
-					colorStack = colorStack[:len(colorStack)-1]
-				}
-			} else {
-				colorStack = append(colorStack, code)
-			}
-		}
-
+		result = strings.ReplaceAll(result, FormColorPlaceholder(code), ansi)
 	}
-	return result + Colors["RT"]
+
+	if s.AddReset {
+		result += Colors["RT"]
+	}
+	return result
+}
+
+func Set(text string) string {
+	return NewSetter(true, &ColorEnabled).Set(text)
 }
 
 // ConvertColored applies color formatting to each string in the slice

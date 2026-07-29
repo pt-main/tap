@@ -182,10 +182,10 @@ func (p *Parser) Parse(cmdArgs []string) error {
 	err := p._call_command(cmd, args)
 	p.__print_verbose("Return after call: %v", err)
 	if err != nil {
-		err = p._call_basic(argv)
-		if err != nil {
-			p.Print("debug", "'%s' cmd handler call with '%s' args end with error: %v", cmd, args, err)
-			return fmt.Errorf("[?RD]Command [?BBK]%q[?RD] failed: \n%w", cmd, err)
+		nerr := p._call_basic(argv)
+		if nerr != nil {
+			p.Print("debug", "'%s' cmd handler call with '%s' args end with error: %v %v", cmd, args, err, nerr)
+			return fmt.Errorf("[?RD]Command [?BBK]%v[?RD] failed: \n%w", cmd, err)
 		}
 	}
 	return nil

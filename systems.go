@@ -33,7 +33,7 @@ func (p *Parser) _call_command(name string, args []string) error {
 func (p *Parser) _call_basic(args []string) error {
 	cmd, ok := p._commands[DEFAULT_CMD]
 	if !ok {
-		return fmt.Errorf("Bad input.")
+		return fmt.Errorf("Bad input: command not found.")
 	}
 	if isArgsInalid(args, cmd) {
 		return fmt.Errorf("Invalid argument length: %d.", len(args))
