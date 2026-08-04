@@ -80,7 +80,7 @@ func help_cmd_handler(p *Parser, _ []string) error {
 	}
 	for key := range p._sub_commands {
 		el := p._sub_commands[key]
-		color.PrintlnColored(p._config.help_subcommand_block_fmt, el._cli_name)
+		color.PrintlnColored(p._config.help_subcommand_block_fmt, "[?YW]"+el._cli_name+"[?RT]")
 		color.PrintlnColored(p._config.help_docs_header_block_fmt)
 		for _, line := range strings.Split(el._about_info, "\n") {
 			color.PrintlnColored(p._config.help_docs_data_block_fmt, line)

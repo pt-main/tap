@@ -133,6 +133,19 @@ func (p *Parser) Subcommand(name string) (err error, pr *Parser) {
 	return
 }
 
+// SubCommand retrieves a previously registered sub-parser by name.
+//
+// It returns the Parser pointer if the name exists;
+// otherwise, it panic.
+func (p *Parser) GetSubcommand(name string) (pr *Parser) {
+	var ok bool
+	pr, ok = p._sub_commands[name]
+	if !ok {
+		panic(fmt.Errorf("Invalid subcommand name: %v", name))
+	}
+	return
+}
+
 // Add alias for command.
 func (p *Parser) AddAlias(aliasName, cmdName string) error {
 	cmdMap, ok := p._commands[cmdName]

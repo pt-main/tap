@@ -7,7 +7,7 @@ import (
 	"github.com/pt-main/tap/core"
 )
 
-func isArgsInalid(args []string, cmd command) bool {
+func isArgsInvalid(args []string, cmd command) bool {
 	full_length := len(cmd.optional_args) + len(cmd.required_args)
 	cond1 := (len(args) > full_length) && (!cmd.unlimited_max_args)
 	cond2 := len(args) < len(cmd.required_args)
@@ -23,8 +23,9 @@ func (p *Parser) _call_command(name string, args []string) error {
 		if err := p._call_subcommand(name, args); err != nil {
 			return err
 		}
+		return nil
 	}
-	if isArgsInalid(args, cmd) {
+	if isArgsInvalid(args, cmd) {
 		return fmt.Errorf("Invalid argument length: %d.", len(args))
 	}
 	return cmd.handler(p, args)
@@ -35,7 +36,7 @@ func (p *Parser) _call_basic(args []string) error {
 	if !ok {
 		return fmt.Errorf("Bad input: command not found.")
 	}
-	if isArgsInalid(args, cmd) {
+	if isArgsInvalid(args, cmd) {
 		return fmt.Errorf("Invalid argument length: %d.", len(args))
 	}
 	return cmd.handler(p, args)
