@@ -193,14 +193,6 @@ color.PrintlnColored("[?BKRD] ERROR: [?RT] error text...")
 
 Available all colors for text except bold and underlinne.
 
-### Colour stack
-
-You can restore the previous colour with `[?<]` (or `[?BACK]`) and clear the stack with `[?SRT]` (or `[?SRESET]`):
-
-```go
-color.PrintlnColored("[?BE][?UE]test [?BD]bold [?RT][?<]restored")
-```
-
 
 ## Interactive dialogs
 
