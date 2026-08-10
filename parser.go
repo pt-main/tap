@@ -219,5 +219,5 @@ func (p *Parser) Main() error {
 				),
 			)))
 	}
-	return fmt.Errorf("")
+	return nil
 }
