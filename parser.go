@@ -67,6 +67,7 @@ func NewParser(cli_name string, about string, help_commands []string, config Par
 		_sub_commands: make(map[string]*Parser),
 		Flags:         map[string]string{},
 		_config:       config,
+		Scope:         make(core.ScopeType),
 	}
 	if help_commands == nil {
 		help_commands = []string{"help", "h"}
@@ -167,7 +168,19 @@ func (p *Parser) Print(flag string, format string, args ...any) {
 }
 
 // Parse args.
-func (p *Parser) Parse(cmdArgs []string) error {
+func (p *Parser) Parse(cmdArgs []string) (err error) {
+	defer func() {
+		if err != nil {
+			errstart := "[?RT][?YW]->[?RT]    [?BBK]|[?RT] "
+			err = fmt.Errorf(color.Set(
+				fmt.Sprintf("[?YW]Execution stopped[?RT]: \n"+errstart+"%v",
+					strings.ReplaceAll(
+						err.Error(),
+						"\n", "\n"+errstart,
+					),
+				)))
+		}
+	}()
 	argv := p._parse_args(cmdArgs)
 	p.__check_flags()
 	if len(argv) < 1 {
@@ -192,14 +205,15 @@ func (p *Parser) Parse(cmdArgs []string) error {
 		"Call '%s' with %v args...",
 		cmd, args,
 	)
-	err := p._call_command(cmd, args)
+	err = p._call_command(cmd, args)
 	p.__print_verbose("Return after call: %v", err)
 	if err != nil {
 		nerr := p._call_basic(argv)
-		if nerr != nil {
-			p.Print("debug", "'%s' cmd handler call with '%s' args end with error: %v %v", cmd, args, err, nerr)
-			return fmt.Errorf("[?RD]Command [?BBK]%v[?RD] failed: \n%w", cmd, err)
+		if nerr == nil {
+			return
 		}
+		p.Print("debug", "'%s' cmd handler call with '%s' args end with error: %v %v", cmd, args, err, nerr)
+		return fmt.Errorf("[?RD]Command [?BBK]%v[?RD] failed: \n%w%w", cmd, err, nerr)
 	}
 	return nil
 }
@@ -208,16 +222,5 @@ func (p *Parser) Parse(cmdArgs []string) error {
 // It parses os.Args[1:], extracts flags, finds the command, and executes the corresponding handler.
 // Returns an error if no command is provided, the command is unknown, or the handler fails.
 func (p *Parser) Main() error {
-	err := p.Parse(os.Args[1:])
-	if err != nil {
-		errstart := "[?RT][?YW]->[?RT]    [?BBK]|[?RT] "
-		return fmt.Errorf(color.Set(
-			fmt.Sprintf("[?YW]Execution stopped[?RT]: \n"+errstart+"%v",
-				strings.ReplaceAll(
-					err.Error(),
-					"\n", "\n"+errstart,
-				),
-			)))
-	}
-	return nil
+	return p.Parse(os.Args[1:])
 }
