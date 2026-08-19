@@ -42,6 +42,7 @@ type Parser struct {
 	_parser_flags map[string]bool
 	Flags         map[string]string
 	Scope         core.ScopeType
+	RawArgs       []string
 	_commands     map[string]command
 	_sub_commands map[string]*Parser
 	_config       ParserConfig
@@ -181,6 +182,7 @@ func (p *Parser) Parse(cmdArgs []string) (err error) {
 				)))
 		}
 	}()
+	p.RawArgs = cmdArgs
 	argv := p._parse_args(cmdArgs)
 	p.__check_flags()
 	if len(argv) < 1 {
@@ -211,8 +213,10 @@ func (p *Parser) Parse(cmdArgs []string) (err error) {
 		nerr := p._call_basic(argv)
 		if nerr == nil {
 			return
+		} else if err != nil {
+			err = fmt.Errorf("%w\n[?RD]OR[?RT]\n", err)
 		}
-		p.Print("debug", "'%s' cmd handler call with '%s' args end with error: %v %v", cmd, args, err, nerr)
+		p.Print("debug", "'%s' cmd handler call with '%s' args end with error: %v%v", cmd, args, err, nerr)
 		return fmt.Errorf("[?RD]Command [?BBK]%v[?RD] failed: \n%w%w", cmd, err, nerr)
 	}
 	return nil
