@@ -171,6 +171,9 @@ func (p *Parser) Print(flag string, format string, args ...any) {
 // Parse args.
 func (p *Parser) Parse(cmdArgs []string) (err error) {
 	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
 		if err != nil {
 			errstart := "[?RT][?YW]->[?RT]    [?BBK]|[?RT] "
 			err = fmt.Errorf(color.Set(
@@ -212,7 +215,7 @@ func (p *Parser) Parse(cmdArgs []string) (err error) {
 	if err != nil {
 		nerr := p._call_basic(argv)
 		if nerr == nil {
-			return
+			return nil
 		} else if err != nil {
 			err = fmt.Errorf("%w\n[?RD]OR[?RT]\n", err)
 		}
