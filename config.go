@@ -28,6 +28,8 @@ type ParserConfig struct {
 	help_docs_header_block_fmt string
 	help_docs_data_block_fmt   string
 	help_end_block_fmt         string
+	BuiltinVerboseDebug        bool
+	BuiltinNoColor             bool
 }
 
 // NewParserConfig creates a new ParserConfig with the given format strings.
@@ -50,6 +52,8 @@ func NewParserConfig(
 	help_docs_header_block_fmt string,
 	help_docs_data_block_fmt string,
 	help_end_block_fmt string,
+	BuiltinVerboseDebug bool,
+	BuiltinNoColor bool,
 ) ParserConfig {
 	if help_command_block_fmt == "" {
 		help_command_block_fmt = "[?GN]╭─────── Command[?RT] [%s]"
@@ -81,10 +85,12 @@ func NewParserConfig(
 		help_docs_header_block_fmt: help_docs_header_block_fmt,
 		help_docs_data_block_fmt:   help_docs_data_block_fmt,
 		help_end_block_fmt:         help_end_block_fmt,
+		BuiltinVerboseDebug:        BuiltinVerboseDebug,
+		BuiltinNoColor:             BuiltinNoColor,
 	}
 }
 
 // Create default parser config.
 func DefaultParserConfig() ParserConfig {
-	return NewParserConfig("", "", "", "", "", "", "")
+	return NewParserConfig("", "", "", "", "", "", "", false, true)
 }

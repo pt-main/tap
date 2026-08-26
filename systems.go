@@ -79,13 +79,22 @@ func (p *Parser) _print_about() {
 
 // __check_flags enables internal verbose/debug flags based on presence in p.Flags.
 func (p *Parser) __check_flags() {
-	_, verbose_ok := p.Flags["verbose"]
-	if verbose_ok {
-		p._parser_flags["verbose"] = true
+	if p._config.BuiltinVerboseDebug {
+		_, verbose_ok := p.Flags["verbose"]
+		if verbose_ok {
+			p._parser_flags["verbose"] = true
+		}
+		_, debug_ok := p.Flags["debug"]
+		if debug_ok {
+			p._parser_flags["debug"] = true
+		}
 	}
-	_, debug_ok := p.Flags["debug"]
-	if debug_ok {
-		p._parser_flags["debug"] = true
+	if p._config.BuiltinNoColor {
+		_, no_color := p.Flags["no_color"]
+		if no_color {
+			color.ColorEnabled = false
+			p._parser_flags["no_color"] = true
+		}
 	}
 	p.__print_verbose(
 		"Check flags by verbose and debug. \n    Flags: %v, \n    Parser flags: %v",

@@ -225,24 +225,29 @@ rw.Write("[?YW]Loading... 0%[?RT]")
 rw.Write("[?GN]Loading... 100%[?RT]")  // replaces the previous line without scrolling
 ```
 
-## Customising the help output
+## Customising parser
 
 Create a `ParserConfig` and pass it to `NewParser`.  
-All fields support format strings - use `%s` for the command name or argument list.
+All help fields support format strings - use `%s` for the command name or argument list.
 
 ```go
 cfg := tap.NewParserConfig(
-    "[?CN]>>> Command [?RT]%s[?CN] <<<[?RT]",
-    "[?CN]Args:[?RT]",
-    "    %s",
-    "[?CN]Description:[?RT]",
-    "    %s",
-    "[?CN]---[?RT]",
+    "[?CN]>>> Command [?RT]%s[?CN] <<<[?RT]",   // command block header format
+    "[?CN]>>> Subcommand [?RT]%s[?CN] <<<[?RT]" // subcommand block header format
+    "[?CN]Args:[?RT]",                          // args block header format
+    "    %s",                                   // args block line format
+    "[?CN]Description:[?RT]",                   // description block header format
+    "    %s",                                   // description args line format
+    "[?CN]---[?RT]",                            // help end line
+    true,                                       // builtin --verbose and --debug flags enable
+    true,                                       // builtin --no_color flag enable
 )
 p := tap.NewParser("mycli", "My tool", nil, cfg)
 ```
 
-If you pass an empty string for any field, the default (coloured, nice looking) will be used.
+If you pass an empty string for any help format field, the default (coloured, nice looking) will be used.
+
+Use `tap.DefaultConfig` to get default config with default help format, enabled no_color and disables verbose and debug flags.
 
 ## Grouping commands / aliases
 
