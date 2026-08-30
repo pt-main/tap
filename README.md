@@ -3,7 +3,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/pt-main/tap.svg)](https://pkg.go.dev/github.com/pt-main/tap)
 
 ```bash
-go get github.com/pt-main/tap
+go get github.com/pt-main/tap@go
 ```
 
 **Tap** is a lightweight library for building beautiful CLI applications in Go.  
