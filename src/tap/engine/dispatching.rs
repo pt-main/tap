@@ -1,5 +1,4 @@
-use crate::engine::structs::{Engine, CmdInfo};
-
+use crate::engine::structs::{CmdInfo, Engine, ErrorType};
 
 fn validate_args<H>(info: &CmdInfo<'_, H>, args: &[&str]) -> Option<String> {
     let ln = args.len();
@@ -15,31 +14,32 @@ fn validate_args<H>(info: &CmdInfo<'_, H>, args: &[&str]) -> Option<String> {
     None
 }
 
-
 impl Engine<'_> {
-    pub fn process(&mut self, cmd: &str, args: &[&str]) -> Option<String> {
-        let err: Option<String>;
+    pub fn process(&mut self, cmd: &str, args: &[&str]) -> ErrorType {
+        let err: ErrorType;
         if let Some(info) = self.cmds.get(cmd) {
             if let Some(err) = validate_args(info, args) {
-                return Some(err);
+                return Err(err.into());
             }
             err = (info.handler)(self, args);
         } else if let Some(info) = self.subcmds.get(cmd) {
             if let Some(err) = validate_args(info, args) {
-                return Some(err);
+                return Err(err.into());
             }
             err = (info.handler)(args);
         } else if let Some(info) = &self.basic_handler {
-            if let Some(err) = validate_args(info, args) {
-                return Some(err);
+            let mut _args = vec![cmd];
+            _args.extend(args);
+            if let Some(err) = validate_args(info, &_args) {
+                return Err(err.into());
             }
-            err = (info.handler)(self, args);
+            err = (info.handler)(self, &_args);
         } else {
-            err = Some("Invalid command: not found".to_string());
+            err = Err("Invalid command: not found".into());
         }
         match err {
-            Some(s) => return Some(format!("Process Error: {}", s)),
-            None => return None,
+            Err(e) => return Err(format!("Process Error: {}", e).into()),
+            Ok(_) => return Ok(()),
         }
     }
 }

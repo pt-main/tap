@@ -48,7 +48,7 @@ impl ArgsP {
         (flags, values, r_args)
     }
 
-    pub fn parse_ags_to_self(&mut self, args: &[&str]) {
+    pub fn parse_agrs_to_self(&mut self, args: &[&str]) {
         let (flags, values, r_args) = Self::parse_args(args);
         self.flags = flags;
         self.values = values;
