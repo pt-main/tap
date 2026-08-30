@@ -7,6 +7,7 @@
 
 ```bash
 cargo install tap-rs
+cargo add tap-rs
 ```
 
 **Tap** is a lightweight library for building CLIs in Rust. It provides a simple API for argument parsing, commands, flags, and colored output, with no external dependencies or complex macros.
