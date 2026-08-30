@@ -1,7 +1,8 @@
 # Tap - библиотека для парсинга CLI на Rust
 
 [![Crates.io](https://img.shields.io/crates/v/tap-rs.svg)](https://crates.io/crates/tap-rs)
-[![Docs.rs](https://docs.rs/tap/badge.svg)](https://docs.rs/tap)
+[![Github](https://img.shields.io/github/)](https://github.com/pt-main/tap/tree/rust)
+[![Docs.rs](https://docs.rs/tap-rs/badge.svg)](https://docs.rs/tap-rs)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-yellow.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ```bash
@@ -84,7 +85,7 @@ MyApp v1.0
 Добавьте команду с помощью `Engine::new_command`:
 
 ```rust
-fn my_handler(e: &mut Engine, args: &[&str]) -> Result<(), Box<dyn Error>> { ... }
+fn my_handler(e: &mut Engine, args: &[&str]) -> ErrorType { ... }
 
 engine.new_command(
     "copy",                               // имя команды
