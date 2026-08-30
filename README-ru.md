@@ -1,8 +1,12 @@
 # Tap - библиотека для парсинга CLI на Rust
 
-[![Crates.io](https://img.shields.io/crates/v/tap.svg)](https://crates.io/crates/tap)
+[![Crates.io](https://img.shields.io/crates/v/tap-rs.svg)](https://crates.io/crates/tap-rs)
 [![Docs.rs](https://docs.rs/tap/badge.svg)](https://docs.rs/tap)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-yellow.svg)](https://opensource.org/licenses/Apache-2.0)
+
+```bash
+cargo install tap-rs
+```
 
 **Tap** - это лёгкая библиотека для построения CLI на Rust. Она предоставляет простой API для парсинга аргументов, работы с командами, флагами и цветным выводом, без внешних зависимостей и сложных макросов.
 

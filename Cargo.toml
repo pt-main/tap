@@ -2,9 +2,11 @@
 name = "tap-rs"
 version = "1.0.0"
 edition = "2024"
+description = "A lightweight CLI library with zero dependencies"
+license = "MIT"
 
 [dependencies]
 
 [lib]
-name = "taprs"
+name = "tap"
 path = "src/tap/mod.rs"
