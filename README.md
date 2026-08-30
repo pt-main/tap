@@ -1,7 +1,7 @@
 # Tap – a CLI parsing library for Rust
 
 [![Crates.io](https://img.shields.io/crates/v/tap-rs.svg)](https://crates.io/crates/tap-rs)
-[![Github](https://img.shields.io/github/)](https://github.com/pt-main/tap/tree/rust)
+[![GitHub](https://img.shields.io/badge/GitHub-repo-181717?logo=github)](https://github.com/pt-main/tap/tree/rust)
 [![Docs.rs](https://docs.rs/tap-rs/badge.svg)](https://docs.rs/tap-rs)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-yellow.svg)](https://opensource.org/licenses/Apache-2.0)
 
