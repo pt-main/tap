@@ -6,5 +6,5 @@ edition = "2024"
 [dependencies]
 
 [lib]
-name = "tap"
+name = "taprs"
 path = "src/tap/mod.rs"
