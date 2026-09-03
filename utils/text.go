@@ -32,7 +32,7 @@ func FramedTextMap(frameColor, header, postfix string, text map[string]string) s
 			res = append(res, fmt.Sprintf("[?%v]⎬─ [?RT]%v", frameColor, name))
 		}
 		for _, line := range strings.Split(textSub, "\n") {
-			textSub += fmt.Sprintf("[?%v]│  [?RT]%v", frameColor, line)
+			res = append(res, fmt.Sprintf("[?%v]│  [?RT]%v", frameColor, line))
 		}
 	}
 	res = append(res, fmt.Sprintf("[?%v]╰─────── [?RT]%v", frameColor, postfix))
