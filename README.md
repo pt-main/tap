@@ -1,4 +1,4 @@
-# Tap – a CLI parsing library for Rust
+# Tap - a CLI parsing library for Rust
 
 [![Crates.io](https://img.shields.io/crates/v/tap-rs.svg)](https://crates.io/crates/tap-rs)
 [![GitHub](https://img.shields.io/badge/GitHub-repo-181717?logo=github)](https://github.com/pt-main/tap/tree/rust)
@@ -115,8 +115,8 @@ Help will show:
 
 Flags are written as `--flag`, `--key=value`, or `--key:value`. They are parsed automatically and stored in `ArgsP`:
 
-- `args_p.flags` – list of flags without values.
-- `args_p.values` – dictionary of key → value.
+- `args_p.flags` - list of flags without values.
+- `args_p.values` - dictionary of key → value.
 
 In your handler you can read them:
 
@@ -137,23 +137,49 @@ fn my_handler(e: &mut Engine, args: &[&str]) -> ErrorType {
 ## Colors
 
 Tap supports colored output via short codes like `[?COLOR]`. Examples:
-- `[?GN]`, `[?GREEN]` – green
-- `[?BGN]`, `[?BGREEN]` – bright green
-- `[?BACKGREEN]`, `[?BKGN]` – green background
-- `[?BACKBGREEN]`, `[?BKBGN]` – bright green background
-- `[?BOLD]`, `[?BD]` – bold
-- `[?UNDERLINE]`, `[?UE]` – underlined
-- `[?RT]` – reset
+- `[?GN]`, `[?GREEN]` - green
+- `[?BGN]`, `[?BGREEN]` - bright green
+- `[?BACKGREEN]`, `[?BKGN]` - green background
+- `[?BACKBGREEN]`, `[?BKBGN]` - bright green background
+- `[?BOLD]`, `[?BD]` - bold
+- `[?DIM]`, `[?DM]` - dim / faint
+- `[?ITALIC]`, `[?IT]` - italic
+- `[?UNDERLINE]`, `[?UE]` - underlined
+- `[?BLINK]`, `[?BL]` - blinking
+- `[?REVERSE]`, `[?RV]` - reverse video
+- `[?STRIKETHROUGH]`, `[?ST]` - strikethrough
+- `[?RT]` - reset
 
-Format – `[?<BACKGROUND><BRIGHT><COLOR>]`, where:
+Format - `[?<BACKGROUND><BRIGHT><COLOR>]`, where:
 
-- `<BACKGROUND>` – to choose a background colour, prepend `BK` (short) or `BACK` (full name) to the colour.
-- `<BRIGHT>` – to use the bright version, prepend `B` (short for 'bright').
-- `<COLOR>` – options:
-    - Two letters: first letter – initial of the colour name, second – final letter.
+- `<BACKGROUND>` - to choose a background colour, prepend `BK` (short) or `BACK` (full name) to the colour.
+- `<BRIGHT>` - to use the bright version, prepend `B` (short for 'bright').
+- `<COLOR>` - options:
+    - Two letters: first letter - initial of the colour name, second - final letter.
         Example: `GN`
 
-Colours – black, red, green, yellow, blue, magenta, cyan, and their bright variants. All colours are available for the background. For text, bold and underline styles are available.
+### Colours
+
+**Standard 16** - black, red, green, yellow, blue, magenta, cyan, white, and their bright variants. All colours are available for the background.
+
+**Extended (xterm-256)** - additional named colours available for both foreground and background:
+
+| Name     | Short | Name     | Short |
+|----------|-------|----------|-------|
+| orange   | `OE`  | lime     | `LE`  |
+| pink     | `PK`  | teal     | `TL`  |
+| purple   | `PE`  | navy     | `NY`  |
+| violet   | `VT`  | gold     | `GD`  |
+| brown    | `BN`  | silver   | `SR`  |
+| gray     | `GY`  | maroon   | `MN`  |
+
+Examples: `[?OE]` - orange, `[?BACKGOLD]` / `[?BKGD]` - gold background, `[?BKOE]` - orange background.
+
+### Styles
+
+For text, the following styles are available: `BOLD` (`BD`), `DIM`/`FAINT` (`DM`), `ITALIC` (`IT`), `UNDERLINE` (`UE`), `BLINK` (`BL`), `REVERSE` (`RV`), `STRIKETHROUGH` (`ST`), and `RESET` (`RT`).
+
+### Usage
 
 Use functions from `tap::formatting::print` and `tap::formatting::color`:
 
@@ -193,5 +219,5 @@ Help will display: `[help / -h]`.
 
 ---
 
-> MIT – see the LICENSE file for details.
+> MIT - see the LICENSE file for details.
 > 2026, By Pt.
