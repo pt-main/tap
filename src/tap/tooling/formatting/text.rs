@@ -1,4 +1,4 @@
-use crate::formatting::set::colorize;
+use crate::tooling::colors::set::colorize;
 
 pub fn frame(text: &str, prefix: &str, postfix: &str, color: &str) -> String {
     let mut res= vec![format!("[?{}]╭─────── [?RT]{}", color, prefix)];

@@ -1,4 +1,4 @@
-use crate::{engine::structs::{CmdInfo, Engine, ErrorType}, formatting::help::generate_help};
+use crate::{engine::structs::{CmdInfo, Engine, ErrorType}, tooling::formatting::help::generate_help};
 
 fn help_handler(e: &mut Engine, _: &[&str]) -> ErrorType {
     println!("{}", generate_help(e));

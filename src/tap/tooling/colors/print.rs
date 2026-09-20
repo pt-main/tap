@@ -1,4 +1,4 @@
-use crate::formatting::set::colorize;
+use crate::tooling::colors::set::colorize;
 
 
 pub fn print(text: &str) {

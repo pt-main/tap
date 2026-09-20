@@ -1,17 +1,13 @@
 use std::sync::atomic::Ordering;
 
-use crate::formatting::color::{COLOR_ENABLED, colors};
+use crate::{tooling::colors::color::{COLOR_ENABLED, colors}, tooling::console::console::Console};
 
 pub fn colorize(s: &str) -> String {
     let mut res = s.to_string(); 
-    let colors = colors();  
     if COLOR_ENABLED.load(Ordering::Relaxed) {
-        for (key, val) in colors.iter() {
-            let plhdr = create_placeholder(key); 
-            res = res.replace(&plhdr, val);      
-        }
+        res = Console::new(true).addc(s, false).get(true);
     } else {
-        for key in colors.keys() {
+        for key in colors().keys() {
             let plhdr = create_placeholder(key); 
             res = res.replace(&plhdr, "");      
         }

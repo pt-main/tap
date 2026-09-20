@@ -1,6 +1,6 @@
 [package]
 name = "tap-rs"
-version = "1.14.14"
+version = "1.14.15"
 edition = "2024"
 description = "A lightweight CLI library with zero dependencies"
 license = "MIT"

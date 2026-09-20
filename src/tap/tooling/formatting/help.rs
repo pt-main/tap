@@ -1,6 +1,6 @@
 use crate::{
     engine::structs::{CmdInfo, Engine}, 
-    formatting::{set::colorize, text::{add_space, frame}}
+    tooling::{colors::set::colorize, formatting::text::{add_space, frame}}
 };
 
 #[derive(PartialEq)]
