@@ -21,7 +21,7 @@ Both implementations follow the same concept: minimal code, maximum convenience.
 Documentation and examples for each language:
 
 - [Go README](https://github.com/pt-main/tap/tree/main/go)
-- [Rust README](https://github.com/pt-main/tap/tree/main/rust)
+- [Rust README](https://github.com/pt-main/tap/tree/main/rs)
 
 ## License
 
