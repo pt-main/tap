@@ -74,7 +74,7 @@ func NewParser(cli_name string, about string, help_commands []string, config Par
 		help_commands = []string{"help", "h"}
 	}
 	for _, cmd := range help_commands {
-		p.AddCommand(cmd, help_cmd_handler, HELP_DOCS, nil, nil, false)
+		p.AddCommand(cmd, help_cmd_handler, HELP_DOCS, nil, nil, true)
 	}
 	return &p
 }
@@ -154,6 +154,7 @@ func (p *Parser) AddAlias(aliasName, cmdName string) error {
 	if !ok {
 		return errors.New("[?RD]Can't add alias[?RT]: \nCommand not found")
 	}
+	cmdMap.name = aliasName
 	p._commands[aliasName] = cmdMap
 	return nil
 }

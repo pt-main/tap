@@ -59,7 +59,7 @@ func NewParserConfig(
 		help_command_block_fmt = "[?GN]╭─────── Command[?RT] [%s]"
 	}
 	if help_subcommand_block_fmt == "" {
-		help_subcommand_block_fmt = "[?GN]╭─────── Subommand[?RT] [%s]"
+		help_subcommand_block_fmt = "[?GN]╭─────── Subcommand[?RT] [%s]"
 	}
 	if help_args_header_block_fmt == "" {
 		help_args_header_block_fmt = "[?GN]⎬─ Args:[?RT]"

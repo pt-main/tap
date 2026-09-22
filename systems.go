@@ -70,11 +70,19 @@ func (p *Parser) __print_debug(format string, args ...any) {
 	p.Print("debug", format, args...)
 }
 
-// _print_about prints the CLI information (name/version) stored in _about_info.
+// _print_about prints the CLI information (name/version) stored in _about_info
+// and the default-command docstring.
 func (p *Parser) _print_about() {
 	p.__print_verbose("Print about")
-	color.PrintlnColored(p._about_info)
-	println(color.Set(p._commands[DEFAULT_CMD].docstring))
+
+	if p._about_info != "" {
+		color.PrintlnColored(p._about_info)
+	}
+
+	if el, ok := p._commands[DEFAULT_CMD]; ok &&
+		el.docstring != "" && el.docstring != DONT_SHOW {
+		color.PrintlnColored(el.docstring)
+	}
 }
 
 // __check_flags enables internal verbose/debug flags based on presence in p.Flags.
