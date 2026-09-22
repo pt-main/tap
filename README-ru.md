@@ -20,8 +20,8 @@
 
 Документация и примеры для каждого языка:
 
-- [Go README](https://github.com/pt-main/tap/go)
-- [Rust README](https://github.com/pt-main/tap/rs)
+- [Go README](https://github.com/pt-main/tap/tree/main/go)
+- [Rust README](https://github.com/pt-main/tap/tree/main/rs)
 
 ## Лицензия
  
