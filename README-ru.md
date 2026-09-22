@@ -20,9 +20,9 @@
 
 Документация и примеры для каждого языка:
 
-- [Go README](https://github.com/pt-main/tap/tree/go)
-- [Rust README](https://github.com/pt-main/tap/tree/rust)
+- [Go README](https://github.com/pt-main/tap/go)
+- [Rust README](https://github.com/pt-main/tap/rs)
 
 ## Лицензия
-
+ 
 MIT — подробности в файлах `LICENSE` в каждой директории.
