@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/pt-main/tap"
+	tap "github.com/pt-main/tap/go"
 )
 
 func main() {

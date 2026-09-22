@@ -1,4 +1,4 @@
-module github.com/pt-main/tap
+module github.com/pt-main/tap/go
 
 go 1.24.13
 

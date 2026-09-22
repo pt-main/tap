@@ -33,8 +33,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/pt-main/tap"
-	"github.com/pt-main/tap/color"
+	tap "github.com/pt-main/tap/go"
+	"github.com/pt-main/tap/go/color"
 )
 
 func helloHandler(p *tap.Parser, args []string) error {
@@ -199,7 +199,7 @@ Available all colors for text except bold and underlinne.
 Tap includes a small utility for interactive user prompts. It supports arrow-key navigation and validated text input.
 
 ```go
-import "github.com/pt-main/tap/utils"
+import "github.com/pt-main/tap/go/utils"
 
 // Arrow-key selection
 dialogue := utils.NewDialogue(utils.ArrowsDialogueType, "[?CN]Select action:[?RT]")
@@ -271,8 +271,8 @@ package main
 import (
     "fmt"
     "os"
-    "github.com/pt-main/tap"
-    "github.com/pt-main/tap/color"
+    "github.com/pt-main/go/tap"
+    "github.com/pt-main/tap/go/color"
 )
 
 func main() {

@@ -3,8 +3,8 @@ package tap
 import (
 	"fmt"
 
-	"github.com/pt-main/tap/color"
-	"github.com/pt-main/tap/core"
+	"github.com/pt-main/tap/go/color"
+	"github.com/pt-main/tap/go/core"
 )
 
 func isArgsInvalid(args []string, cmd command) bool {

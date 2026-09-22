@@ -5,7 +5,7 @@ import (
 	"slices"
 
 	"github.com/eiannone/keyboard"
-	"github.com/pt-main/tap/color"
+	"github.com/pt-main/tap/go/color"
 )
 
 // DialogueType represents the mode of user interaction.

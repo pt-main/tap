@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/pt-main/tap/color"
+	"github.com/pt-main/tap/go/color"
 )
 
 func helpFormArgs(el command) string {

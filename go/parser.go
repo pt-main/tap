@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/pt-main/tap/color"
-	"github.com/pt-main/tap/core"
+	"github.com/pt-main/tap/go/color"
+	"github.com/pt-main/tap/go/core"
 )
 
 // HandlerFuncType defines the signature for command handler functions.
