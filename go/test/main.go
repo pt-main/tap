@@ -8,6 +8,12 @@ import (
 
 func main() {
 	p := tap.NewParser("test", "[?RD]TEST TAP PARSER[?RT]", []string{"help", "-h"}, tap.DefaultParserConfig())
+
+	p.AddCommand(tap.DEFAULT_CMD, func(p *tap.Parser, s []string) error {
+		fmt.Println(p.Super.Flags)
+		return nil
+	}, "---", nil, nil, true)
+
 	p.AddCommand("1", func(p *tap.Parser, s []string) error {
 		fmt.Println("1")
 		return nil
@@ -21,5 +27,7 @@ func main() {
 	p.AddAlias("p2", "2")
 	p.AddSubcommand("self", p)
 
-	p.Main()
+	if err := p.Main(); err != nil {
+		fmt.Println(err)
+	}
 }

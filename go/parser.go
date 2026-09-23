@@ -41,6 +41,7 @@ type Parser struct {
 	_about_info   string
 	_parser_flags map[string]bool
 	Flags         map[string]string
+	Super         *Parser
 	Scope         core.ScopeType
 	RawArgs       []string
 	_commands     map[string]command
@@ -68,6 +69,7 @@ func NewParser(cli_name string, about string, help_commands []string, config Par
 		_sub_commands: make(map[string]*Parser),
 		Flags:         map[string]string{},
 		_config:       config,
+		Super:         nil,
 		Scope:         make(core.ScopeType),
 	}
 	if help_commands == nil {

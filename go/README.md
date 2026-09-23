@@ -271,7 +271,7 @@ package main
 import (
     "fmt"
     "os"
-    "github.com/pt-main/go/tap"
+    tap "github.com/pt-main/tap/go"
     "github.com/pt-main/tap/go/color"
 )
 

@@ -47,6 +47,18 @@ func (p *Parser) _call_subcommand(name string, args []string) error {
 	if !ok {
 		return fmt.Errorf("Unknown command: %s", name)
 	}
+	args = []string{}
+	write := false
+	for _, arg := range p.RawArgs {
+		if write {
+			args = append(args, arg)
+		}
+		if arg == "self" {
+			write = true
+		}
+	}
+	cmd.Flags = p.Flags
+	cmd.Super = p
 	return cmd.Parse(args)
 }
 
