@@ -167,6 +167,7 @@ func (p *Parser) Print(flag string, format string, args ...any) {
 	spaces := strings.Repeat(" ", len(flag))
 	format = strings.ReplaceAll(format, "\n", "\n"+spaces+" [?GN]=>[?RT] ")
 	if p._parser_flags[flag] {
+		flag = "[" + p._cli_name + "]:" + flag
 		color.PrintlnColored("[?RD]"+strings.ToUpper(flag)+"[?RT] [?GN]=>[?RT] "+format, args...)
 	}
 }
@@ -190,6 +191,10 @@ func (p *Parser) Parse(cmdArgs []string) (err error) {
 	}()
 	p.RawArgs = cmdArgs
 	argv := p._parse_args(cmdArgs)
+	p.__print_verbose(
+		"Work's with %v args...",
+		argv,
+	)
 	p.__check_flags()
 	if len(argv) < 1 {
 		p._print_about()

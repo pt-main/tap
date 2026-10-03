@@ -47,18 +47,19 @@ func (p *Parser) _call_subcommand(name string, args []string) error {
 	if !ok {
 		return fmt.Errorf("Unknown command: %s", name)
 	}
+	cmd.Super = p
 	args = []string{}
 	write := false
 	for _, arg := range p.RawArgs {
 		if write {
 			args = append(args, arg)
 		}
-		if arg == "self" {
+		if arg == name {
 			write = true
 		}
 	}
 	cmd.Flags = p.Flags
-	cmd.Super = p
+	cmd._parser_flags = p._parser_flags
 	return cmd.Parse(args)
 }
 
@@ -68,7 +69,9 @@ func (p *Parser) _call_subcommand(name string, args []string) error {
 func (p *Parser) _parse_args(argv []string) []string {
 	p.__print_verbose("Parsing args.")
 	flags, res := (&core.Utils{}).ParseArgs(argv)
-	p.Flags = flags
+	for name, flag := range flags {
+		p.Flags[name] = flag
+	}
 	return res
 }
 

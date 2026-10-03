@@ -10,7 +10,8 @@ func main() {
 	p := tap.NewParser("test", "[?RD]TEST TAP PARSER[?RT]", []string{"help", "-h"}, tap.DefaultParserConfig())
 
 	p.AddCommand(tap.DEFAULT_CMD, func(p *tap.Parser, s []string) error {
-		fmt.Println(p.Super.Flags)
+		fmt.Println(p.Flags, s)
+		fmt.Println(p.Super.RawArgs, p.RawArgs)
 		return nil
 	}, "---", nil, nil, true)
 
