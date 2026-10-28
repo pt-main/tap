@@ -1,20 +1,12 @@
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicBool, Ordering};
 
-use crate::{tooling::colors::color::{COLOR_ENABLED, colors}, tooling::console::console::Console};
+use crate::tooling::console::{colors, styles::Text};
+
+pub static COLOR_ENABLED: AtomicBool = AtomicBool::new(true);
 
 pub fn colorize(s: &str) -> String {
-    let mut res = s.to_string(); 
-    if COLOR_ENABLED.load(Ordering::Relaxed) {
-        res = Console::new(true).addc(s, false).get(true);
-    } else {
-        for key in colors().keys() {
-            let plhdr = create_placeholder(key); 
-            res = res.replace(&plhdr, "");      
-        }
-    }
-    res
-}
-
-fn create_placeholder(color: &str) -> String {
-    return format!("[?{}]", color);
+    let colored = COLOR_ENABLED.load(Ordering::Relaxed);
+    let mut text = Text::new();
+    colors::colorize(s, &mut text);
+    text.get(colored)
 }

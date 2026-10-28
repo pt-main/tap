@@ -1,8 +1,10 @@
 use crate::argsparsing::ArgsP;
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 pub type ErrorType = Result<(), Box<dyn std::error::Error>>;
-pub type HandlerType = fn(&mut Engine<'_>, &[&str]) -> ErrorType;
+
+pub type RawHandlerType = dyn Fn(&mut Engine<'_>, &[&str]) -> ErrorType;
+pub type HandlerType    = Rc<RawHandlerType>;
 pub type SubHandlerType = fn(&[&str]) -> ErrorType;
 
 pub type CmdInfoCmd<'a> = CmdInfo<'a, HandlerType>;

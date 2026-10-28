@@ -1,4 +1,7 @@
-use crate::tooling::console::{colors::colorize, styles::{Str, Text}};
+use crate::tooling::console::{
+    colors::colorize,
+    styles::{Str, Text},
+};
 
 pub struct Console {
     pub buf: Vec<Text>,
@@ -6,9 +9,11 @@ pub struct Console {
 }
 
 impl Console {
-
     pub fn new(colored: bool) -> Self {
-        Self { buf: vec![], colored: colored }
+        Self {
+            buf: vec![],
+            colored: colored,
+        }
     }
 
     pub fn addc(&mut self, text: &str, new: bool) -> &mut Self {

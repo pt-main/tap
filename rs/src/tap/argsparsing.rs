@@ -27,6 +27,7 @@ impl ArgsP {
         let mut flags: Vec<String> = vec![];
         let mut values: HashMap<String, String> = HashMap::new();
         let mut r_args: Vec<String> = vec![];
+        let mut can_be_flag = true;
         for arg in args {
             let mut split: Vec<&str> = arg.splitn(2, "=").collect();
             if split.len() == 1 {
@@ -35,7 +36,12 @@ impl ArgsP {
             let s0 = split[0];
             let sch = Self::count_leading_same_chars(s0);
 
-            if s0.starts_with("-") && s0.len() > sch && sch < 3 {
+            if *arg == "--" {
+                can_be_flag = !can_be_flag;
+                continue;
+            }
+
+            if s0.starts_with("--") && s0.len() > sch && sch < 3 && can_be_flag {
                 if split.len() > 1 {
                     values.insert(s0[sch..].to_string(), split[1].to_string());
                 } else {

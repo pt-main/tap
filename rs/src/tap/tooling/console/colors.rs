@@ -80,7 +80,6 @@ pub const BLINK: &str = "\x1b[5m";
 pub const REVERSE: &str = "\x1b[7m";
 pub const STRIKETHROUGH: &str = "\x1b[9m";
 
-
 macro_rules! add_color {
     ($m:expr, $name:literal, $code:expr; $($alias:literal),+ $(,)?) => {
         $(
@@ -177,41 +176,34 @@ pub fn colors() -> &'static HashMap<&'static str, Color> {
 }
 
 pub fn colorize(inp: &str, text: &mut Text) {
-    let mut skip: i32 = -1;
-    for (idx, ch) in inp.char_indices() {
-        if skip > (idx as i32) {
-            continue;
-        }
-        let curr = &inp[idx..];
-        let mut push = true;
-        if ch == '[' {
-            if let Some(new) = curr.strip_prefix("[?") {
-                let mut best: Option<(&str, Color)> = None;
-                for (code, col) in colors() {
-                    if new.starts_with(code) {
-                        if best.map_or(true, |(b, _)| code.len() > b.len()) {
-                            best = Some((code, *col));
-                        }
-                    }
-                }
-                if let Some((code, col)) = best {
+    let table = colors();
+    let mut rest = inp;
+    while !rest.is_empty() {
+        if let Some(after) = rest.strip_prefix("[?") {
+            let close = after
+                .char_indices()
+                .find(|(i, c)| *c == ']' && *i < 32)
+                .map(|(i, _)| i);
+            if let Some(close) = close {
+                let code = &after[..close];
+                if let Some(col) = table.get(code) {
                     let mut s = Str::new();
-                    s.colors.add(col);
+                    s.colors.add(*col);
                     text.text.push(s);
-                    push = false;
-                    skip = idx as i32 + code.len() as i32 + 3;
+                    rest = &after[close + 1..];
+                    continue;
                 }
             }
         }
-        if push {
-            let l = text.text.len();
-            if l > 0 {
-                text.text[l-1].text.push(ch);
-            } else {
-                let mut str = Str::new();
-                str.text.push(ch);
-                text.text.push(str);
-            }
+        let ch = rest.chars().next().unwrap();
+        let l = text.text.len();
+        if l > 0 {
+            text.text[l - 1].text.push(ch);
+        } else {
+            let mut s = Str::new();
+            s.text.push(ch);
+            text.text.push(s);
         }
+        rest = &rest[ch.len_utf8()..];
     }
 }

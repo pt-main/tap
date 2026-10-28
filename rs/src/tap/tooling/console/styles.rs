@@ -45,7 +45,10 @@ pub struct Str {
 
 impl Str {
     pub fn new() -> Self {
-        Self { text: "".to_string(), colors: Colors::new() }
+        Self {
+            text: "".to_string(),
+            colors: Colors::new(),
+        }
     }
 
     pub fn add(&mut self, text: &str) -> &mut Self {
@@ -77,7 +80,7 @@ impl Text {
         let mut res = String::from("");
         for text in self.text.iter() {
             res.push_str(&text.get(colored));
-        } 
+        }
         res
     }
 }

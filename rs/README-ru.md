@@ -3,38 +3,35 @@
 [![Crates.io](https://img.shields.io/crates/v/tap-rs.svg)](https://crates.io/crates/tap-rs)
 [![GitHub](https://img.shields.io/badge/GitHub-repo-181717?logo=github)](https://github.com/pt-main/tap/tree/rust)
 [![Docs.rs](https://docs.rs/tap-rs/badge.svg)](https://docs.rs/tap-rs)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-yellow.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ```bash
-cargo install tap-rs
-# OR
 cargo add tap-rs
 # OR
 cargo add --git https://github.com/pt-main/tap/rs
 ```
 
-**Tap** - это лёгкая библиотека для построения CLI на Rust. Она предоставляет простой API для парсинга аргументов, работы с командами, флагами и цветным выводом, без внешних зависимостей и сложных макросов.
+**Tap** - лёгкая библиотека для построения CLI на Rust. Простой API для парсинга аргументов, команд, флагов и цветного вывода. Одна зависимость (`string_template`), без макросов.
 
 ---
 
 ## Особенности
 
-- **Цветной вывод** через короткие коды: `[?GN]`, `[?RD]`, `[?YW]` и т.д.
-- **Автогенерация справки** с группировкой команд по одинаковым обработчикам.
-- **Сабкоманды** (вложенные команды).
-- **Нуль зависимостей** (только `std`).
+- Цветной вывод через короткие коды: `[?GN]`, `[?RD]`, `[?YW]` и т.д.
+- Автогенерация справки с группировкой команд по одинаковым обработчикам.
+- Сабкоманды (вложенные команды).
+- Рендереры вывода с шаблонами и типизацией плюс JSON-сериализация.
 
 ---
 
 ## Быстрый старт
 
-Создадим простое CLI с командой `hello`:
+Простое CLI с командой `hello`:
 
 ```rust
 use tap::{
     argsparsing::ArgsP,
     engine::structs::{CmdInfo, Engine, ErrorType},
-    utils::add_help_handler,
+    tooling::console::engine::add_help_handler,
 };
 
 fn hello_handler(_: &mut Engine, args: &[&str]) -> ErrorType {
@@ -82,11 +79,11 @@ MyApp v1.0
 ╰─────── 
 ```
 
+Символы рамки в выводе `help` - это то, что реально печатает `generate_help`. Не украшение README.
+
 ---
 
 ## Команды и аргументы
-
-Добавьте команду с помощью `Engine::new_command`:
 
 ```rust
 fn my_handler(e: &mut Engine, args: &[&str]) -> ErrorType { ... }
@@ -97,13 +94,14 @@ engine.new_command(
         my_handler,                       // функция-обработчик
         vec!["src", "dst"],               // обязательные аргументы
         vec!["force"],                    // опциональные
-        false,                            // unlimited (если true, то принимает любое количество дополнительных аргументов)
-        "Copy source to destination",     // описание для помощи
+        false,                            // unlimited: если true, принимает любое число доп. аргументов
+        "Copy source to destination",     // описание для справки
     ),
 );
 ```
 
-Помощь покажет:
+Справка покажет:
+
 ```
 ╭───────  Command [copy]
 ⎬─ Args: <src>, <dst>, [force]
@@ -116,12 +114,12 @@ engine.new_command(
 
 ## Флаги
 
-Флаги записываются как `--flag`, `--key=value`, `--key:value`. Они парсятся автоматически и сохраняются в `ArgsP`:
+Флаги записываются как `--flag`, `--key=value`, `--key:value`. Парсятся автоматически в `ArgsP`:
 
 - `args_p.flags` - список флагов без значений.
 - `args_p.values` - словарь ключ -> значение.
 
-В обработчике вы можете их прочитать:
+Чтение в обработчике:
 
 ```rust
 fn my_handler(e: &mut Engine, args: &[&str]) -> ErrorType {
@@ -135,17 +133,20 @@ fn my_handler(e: &mut Engine, args: &[&str]) -> ErrorType {
 }
 ```
 
+Важно: флаги вырезаются из `args` до вызова обработчика. Смотрите их только через `e.args_p`.
+
 ---
 
 ## Цвета
 
-Tap поддерживает цветной вывод с помощью коротких кодов вроде `[?COLOR]`. Примеры:
+Цветной вывод через коды `[?COLOR]`:
+
 - `[?GN]`, `[?GREEN]` - зелёный
 - `[?BGN]`, `[?BGREEN]` - ярко-зелёный
 - `[?BACKGREEN]`, `[?BKGN]` - зелёный фон
 - `[?BACKBGREEN]`, `[?BKBGN]` - ярко-зелёный фон
 - `[?BOLD]`, `[?BD]` - жирный
-- `[?DIM]`, `[?DM]` - тусклый / приглушённый
+- `[?DIM]`, `[?DM]` - тусклый
 - `[?ITALIC]`, `[?IT]` - курсив
 - `[?UNDERLINE]`, `[?UE]` - подчёркнутый
 - `[?BLINK]`, `[?BL]` - мигающий
@@ -153,61 +154,63 @@ Tap поддерживает цветной вывод с помощью кор�
 - `[?STRIKETHROUGH]`, `[?ST]` - зачёркнутый
 - `[?RT]` - сброс
 
-Формат - `[?<BACKGROUND><BRIGHT><COLOR>]`, где:
+Формат: `[?<BACKGROUND><BRIGHT><COLOR>]`.
 
-- `<BACKGROUND>` - чтобы выбрать цвет фона, добавьте перед цветом `BK` (кратко) или `BACK` (полное имя).
-- `<BRIGHT>` - чтобы использовать яркий вариант, добавьте `B` (сокращение от 'bright').
-- `<COLOR>` - варианты:
-    - Две буквы: первая буква - начальная буква названия цвета, вторая - конечная.
-        Пример: `GN`
+- `<BACKGROUND>` - префикс `BK` (кратко) или `BACK` (полностью) для фона. (опциональный)
+- `<BRIGHT>` - префикс `B` для яркого варианта. (опциональный)
+- `<COLOR>` - имя или две буквы (первая и последняя буква названия). Пример: `GN` = green. (обязательный)
 
-### Цвета
+### Палитра
 
-**Стандартные 16** - чёрный, красный, зелёный, жёлтый, синий, пурпурный, голубой, белый и их яркие варианты. Все цвета доступны для фона.
+**Стандартные 16**: black, red, green, yellow, blue, magenta, cyan, white и их яркие варианты. Все доступны как фон.
 
-**Расширенные (xterm-256)** - дополнительные именованные цвета, доступные как для переднего плана, так и для фона:
+**Расширенные (xterm-256)**: доступны и как фон:
 
-| Название     | Сокр. | Название     | Сокр. |
-|--------------|-------|--------------|-------|
-| оранжевый    | `OE`  | лаймовый     | `LE`  |
-| розовый      | `PK`  | бирюзовый    | `TL`  |
-| пурпурный    | `PE`  | тёмно-синий  | `NY`  |
-| фиолетовый   | `VT`  | золотой      | `GD`  |
-| коричневый   | `BN`  | серебряный   | `SR`  |
-| серый        | `GY`  | бордовый     | `MN`  |
+| Название  | Сокр. | Название    | Сокр. |
+|-----------|-------|-------------|-------|
+| orange    | `OE`  | lime        | `LE`  |
+| pink      | `PK`  | teal        | `TL`  |
+| purple    | `PE`  | navy        | `NY`  |
+| violet    | `VT`  | gold        | `GD`  |
+| brown     | `BN`  | silver      | `SR`  |
+| gray      | `GY`  | maroon      | `MN`  |
 
 Примеры: `[?OE]` - оранжевый, `[?BACKGOLD]` / `[?BKGD]` - золотой фон, `[?BKOE]` - оранжевый фон.
 
 ### Стили
 
-Для текста доступны следующие стили: `BOLD` (`BD`), `DIM`/`FAINT` (`DM`), `ITALIC` (`IT`), `UNDERLINE` (`UE`), `BLINK` (`BL`), `REVERSE` (`RV`), `STRIKETHROUGH` (`ST`) и `RESET` (`RT`).
+`BOLD` (`BD`), `DIM`/`FAINT` (`DM`), `ITALIC` (`IT`), `UNDERLINE` (`UE`), `BLINK` (`BL`), `REVERSE` (`RV`), `STRIKETHROUGH` (`ST`), `RESET` (`RT`).
 
 ### Использование
 
-Используйте функции из `tap::formatting::print` и `tap::formatting::color`:
-
 ```rust
-use tap::formatting::print::println;
-use tap::formatting::color::colorize;
+use tap::tooling::colors::print::println;
+use tap::tooling::colors::set::colorize;
 
 let raw = "[?GN]Успех![?RT] Файл сохранён как [?YW]config.toml[?RT]";
 
-println(raw); 
-let colored = colorize(raw)
+println(raw);                       // печатает уже раскрашенным
+let colored: String = colorize(raw); // или получите строку
 ```
 
-Цвета можно отключить глобально:
+`println`/`print` в `colors::print` уже вызывают `colorize` внутри - не нужно красить дважды.
+
+Отключить цвета глобально:
 
 ```rust
-use tap::formatting::color::COLOR_ENABLED;
+use tap::tooling::colors::set::COLOR_ENABLED;
 use std::sync::atomic::Ordering;
 
 COLOR_ENABLED.store(false, Ordering::Relaxed);
 ```
 
-## Группировка команд в помощи
+Неизвестные коды (`[?FOO]`) не съедаются и не превращаются в мусор - они остаются в строке как есть. Это удобно для отладки.
 
-Команды с одинаковыми значениями `CmdInfo` автоматически группируются в одну строку, как алиасы:
+---
+
+## Группировка команд в справке
+
+Команды с одинаковыми `CmdInfo` автоматически группируются в одну строку как алиасы:
 
 ```rust
 engine.new_commands(
@@ -216,10 +219,37 @@ engine.new_commands(
 );
 ```
 
-В помощи будет выведено: `[help / -h]`.
+В справке будет `[help / -h]`.
 
+Сравниваются `required`, `optional`, `unlimited` и `docs`. Если `docs` отличаются - группировки не будет.
 
 ---
 
-> MIT – подробности в файле LICENSE.
+## Рендереры
+
+Модуль `tooling::renderable` позволяет шаблонизировать вывод по scope:
+
+```rust
+use tap::tooling::renderable::{
+    Renderable, add_template_render, add_template_render_colored,
+};
+
+let mut r = Renderable::new();
+r.scope.insert("name", "Rust");
+r.scope.insert("version:int", "1");     // :int - валидируется как число
+r.scope.insert("stable:bool", "true");  // :bool - только "true"/"false"
+
+add_template_render("Hello, {{name}} (v{{version}})", "plain", &mut r);
+add_template_render_colored("[?GN]Hello, {{name}}[?RT]", "colored", &mut r);
+
+println!("{}", r.render_with("plain").unwrap());
+println!("{}", r.render_with("colored").unwrap());
+println!("{}", r.render_json().unwrap()); // {"name":"Rust","stable":true,"version":1}
+```
+
+`render_json` возвращает `Result` - при невалидном `:int`/`:bool` вернёт `RenderError::InvalidValue`, а не молча вставит мусор в JSON.
+
+---
+
+> MIT - подробности в файле LICENSE.
 > 2026, By Pt.

@@ -1,10 +1,12 @@
 use crate::argsparsing::ArgsP;
-use crate::engine::structs::{BasicHandler, CmdInfoCmd, CmdInfoSubcmd, CmdMap, Engine, ErrorType, SubCmdsMap};
+use crate::engine::structs::{
+    BasicHandler, CmdInfoCmd, CmdInfoSubcmd, CmdMap, Engine, ErrorType, SubCmdsMap,
+};
 use std::collections::HashMap;
-use std::{env};
+use std::env;
 
 pub struct EngineGetter<'a> {
-    pub e: &'a Engine<'a>
+    pub e: &'a Engine<'a>,
 }
 
 impl<'a> EngineGetter<'a> {
@@ -21,7 +23,7 @@ impl<'a> EngineGetter<'a> {
     }
 
     pub fn basic_handler(&self) -> &BasicHandler<'a> {
-        return  &self.e.basic_handler;
+        return &self.e.basic_handler;
     }
 }
 
@@ -68,17 +70,13 @@ impl<'a> Engine<'a> {
         }
         let all_args = self.args_p.args.clone();
         let cmd = all_args[0].as_str();
-        let args_refs: Vec<&str> = all_args[1..].iter().map(|s| s.as_str()).collect();
+        let args_refs: Vec<&str> = all_args[1..].iter().map(String::as_str).collect();
         self.process(cmd, &args_refs)
     }
 
     pub fn main(&mut self) -> ErrorType {
-        self.work(
-            &env::args()
-                .collect::<Vec<_>>()
-                .iter()
-                .map(|s| s.as_str())
-                .collect::<Vec<_>>()[1..],
-        )
+        let args: Vec<String> = env::args().skip(1).collect();
+        let refs: Vec<&str> = args.iter().map(String::as_str).collect();
+        self.work(&refs)
     }
 }

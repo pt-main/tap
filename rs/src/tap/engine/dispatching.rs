@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::engine::structs::{CmdInfo, Engine, ErrorType};
 
 fn validate_args<H>(info: &CmdInfo<'_, H>, args: &[&str]) -> Option<String> {
@@ -5,10 +7,19 @@ fn validate_args<H>(info: &CmdInfo<'_, H>, args: &[&str]) -> Option<String> {
     let r = &info.required;
     let o = &info.optional;
     let u = info.unlimited;
-    if (ln > r.len() + o.len() && !u) || ln < r.len() {
+    if ln < r.len() {
         return Some(format!(
-            "Invalid argument length: {} (must be: [{}])",
-            ln, r.join(", ")
+            "Missing arguments: expected at least {}, got {} ({})",
+            r.len(),
+            ln,
+            r.join(", ")
+        ));
+    }
+    if ln > r.len() + o.len() && !u {
+        return Some(format!(
+            "Too many arguments: expected at most {}, got {}",
+            r.len() + o.len(),
+            ln
         ));
     }
     None
@@ -21,7 +32,8 @@ impl Engine<'_> {
             if let Some(err) = validate_args(info, args) {
                 return Err(err.into());
             }
-            err = (info.handler)(self, args);
+            let handler = Rc::clone(&info.handler);
+            err = handler(self, args);
         } else if let Some(info) = self.subcmds.get(cmd) {
             if let Some(err) = validate_args(info, args) {
                 return Err(err.into());
@@ -33,7 +45,8 @@ impl Engine<'_> {
             if let Some(err) = validate_args(info, &_args) {
                 return Err(err.into());
             }
-            err = (info.handler)(self, &_args);
+            let handler = Rc::clone(&info.handler);
+            err = handler(self, &_args);
         } else {
             err = Err("Invalid command: not found".into());
         }

@@ -1,4 +1,4 @@
-use crate::engine::structs::{CmdInfo};
+use crate::engine::structs::CmdInfo;
 
 impl<'a, H> CmdInfo<'a, H> {
     pub fn new(

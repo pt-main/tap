@@ -1,17 +1,23 @@
 use crate::{
-    engine::structs::{CmdInfo, Engine}, 
-    tooling::{colors::set::colorize, formatting::text::{add_space, frame}}
+    engine::structs::{CmdInfo, Engine},
+    tooling::{
+        colors::set::colorize,
+        formatting::text::{add_space, frame},
+    },
 };
 
 #[derive(PartialEq)]
 pub struct HelpCmdInfo<'a, H> {
     pub commands: Vec<String>,
-    pub info: &'a CmdInfo<'a, H>
+    pub info: &'a CmdInfo<'a, H>,
 }
 
 impl<'a, H> HelpCmdInfo<'a, H> {
     pub fn new(command: String, info: &'a CmdInfo<'a, H>) -> Self {
-        Self { commands: vec![command], info: info }
+        Self {
+            commands: vec![command],
+            info: info,
+        }
     }
 
     pub fn is(&mut self, name: String, info: &CmdInfo<'a, H>) -> bool {
@@ -25,7 +31,6 @@ impl<'a, H> HelpCmdInfo<'a, H> {
         same
     }
 }
-
 
 pub fn group_commands<'a, C, H>(commands: &'a C) -> Vec<HelpCmdInfo<'a, H>>
 where
@@ -62,10 +67,26 @@ pub fn generate_help(eng: &Engine) -> String {
                 res.push_str(docs);
                 res.push_str("\n\n");
             }
-        }, None => {}
+        }
+        None => {}
     }
     // === Generating commands help ===
-    let commands = group_commands(&eng.cmds);
+    let mut cmds_keys: Vec<&str> = eng.cmds.keys().copied().collect();
+    cmds_keys.sort_unstable();
+    let mut commands: Vec<HelpCmdInfo<'_, _>> = Vec::new();
+    for name in cmds_keys.iter().copied() {
+        let info = eng.cmds.get(name).unwrap();
+        let mut added = false;
+        for cmd in &mut commands {
+            if cmd.is(name.to_string(), info) {
+                added = true;
+                break;
+            }
+        }
+        if !added {
+            commands.push(HelpCmdInfo::new(name.to_string(), info));
+        }
+    }
     for cmd in commands {
         let mut argsv: Vec<String> = vec![];
         for req in &cmd.info.required {
@@ -84,24 +105,43 @@ pub fn generate_help(eng: &Engine) -> String {
         }
         let args = colorize(&argsv.join(", "));
         let block = &format!(
-"- [?YW]Args[?RT]: {}
-- [?YW]Docs[?RT]:
-{}", 
-args, add_space(&cmd.info.docs, " ", 1));
+            "- [?YW]Args[?RT]: {}\n- [?YW]Docs[?RT]:\n{}",
+            args,
+            add_space(&cmd.info.docs, " ", 1)
+        );
         let cmd = &colorize(&format!(
-            "[?BGN] Command [?BKBK][?BBK][[?BKBK][?YW]{}[?BBK]][?RT]", 
-        cmd.commands.join(" [?GN]OR[?YW] ")));
+            "[?BGN] Command [?BKBK][?BBK][[?BKBK][?YW]{}[?BBK]][?RT]",
+            cmd.commands.join(" [?GN]OR[?YW] ")
+        ));
         res.push_str(&frame(block, cmd, "", "GN"));
         res.push('\n');
     }
     // === Generating subcommands help ===
-    let subcommands = group_commands(&eng.subcmds);
+    let mut subcmds_keys: Vec<&str> = eng.subcmds.keys().copied().collect();
+    subcmds_keys.sort_unstable();
+    let mut subcommands: Vec<HelpCmdInfo<'_, _>> = Vec::new();
+    for name in subcmds_keys.iter().copied() {
+        let info = eng.subcmds.get(name).unwrap();
+        let mut added = false;
+        for cmd in &mut subcommands {
+            if cmd.is(name.to_string(), info) {
+                added = true;
+                break;
+            }
+        }
+        if !added {
+            subcommands.push(HelpCmdInfo::new(name.to_string(), info));
+        }
+    }
     for cmd in subcommands {
-        let block = &format!("- [?YW]Docs[?RT]:
-{}", add_space(&cmd.info.docs, " ", 1));
+        let block = &format!(
+            "- [?YW]Docs[?RT]:\n{}",
+            add_space(&cmd.info.docs, " ", 1)
+        );
         let cmd = &colorize(&format!(
-            "[?BGN] Command [?BKBK][?BBK][[?BKBK][?YW]{}[?BBK]][?RT]", 
-        cmd.commands.join(" [?GN]OR[?YW] ")));
+            "[?BGN] Command [?BKBK][?BBK][[?BKBK][?YW]{}[?BBK]][?RT]",
+            cmd.commands.join(" [?GN]OR[?YW] ")
+        ));
         res.push_str(&frame(block, cmd, "", "GN"));
         res.push('\n');
     }
