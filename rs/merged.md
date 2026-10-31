@@ -78,7 +78,7 @@ dependencies = [
 
 [[package]]
 name = "tap-rs"
-version = "1.5.6"
+version = "1.6.2"
 dependencies = [
  "string_template",
 ]
@@ -89,7 +89,7 @@ dependencies = [
 ```toml
 [package]
 name = "tap-rs"
-version = "1.5.6"
+version = "1.6.2"
 edition = "2024"
 description = "A lightweight CLI library"
 license = "MIT"
@@ -655,7 +655,7 @@ println!("{}", r.render_json().unwrap()); // {"name":"Rust","stable":true,"versi
 ## `src/tap/argsparsing.rs`
 
 ```rust
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
 pub struct ArgsP {
     pub args: Vec<String>,
@@ -693,7 +693,7 @@ impl ArgsP {
             let s0 = split[0];
             let sch = Self::count_leading_same_chars(s0);
 
-            if *arg == "--" {
+            if *arg == "--" && can_be_flag {
                 can_be_flag = !can_be_flag;
                 continue;
             }
@@ -711,11 +711,36 @@ impl ArgsP {
         (flags, values, r_args)
     }
 
-    pub fn parse_agrs_to_self(&mut self, args: &[&str]) {
+    pub fn parse_args_to_self(&mut self, args: &[&str]) {
         let (flags, values, r_args) = Self::parse_args(args);
         self.flags = flags;
         self.values = values;
         self.args = r_args;
+    }
+}
+
+
+pub trait ArgsExt {
+    fn arg<T: FromStr>(&self, i: usize) -> Result<T, String>
+    where
+        T::Err: std::fmt::Display;
+
+    fn arg_or<'a>(&'a self, i: usize, default: &'a str) -> &'a str;
+}
+
+impl ArgsExt for [&str] {
+    fn arg<T: FromStr>(&self, i: usize) -> Result<T, String>
+    where
+        T::Err: std::fmt::Display,
+    {
+        self.get(i)
+            .ok_or_else(|| format!("missing argument #{}", i))?
+            .parse()
+            .map_err(|e| format!("invalid argument #{}: {}", i, e))
+    }
+
+    fn arg_or<'a>(&'a self, i: usize, default: &'a str) -> &'a str {
+        self.get(i).copied().unwrap_or(default)
     }
 }
 ```
@@ -729,12 +754,461 @@ pub mod engine;
 pub mod structs;
 ```
 
+## `src/tap/macros.rs`
+
+````rust
+//! Convenience macros and helper functions for `tap`.
+//!
+//! # Enabling
+//!
+//! This module is not wired up automatically. Add it in `src/tap/mod.rs`:
+//!
+//! ```ignore
+//! pub mod macros;
+//! ```
+//!
+//! All macros are exported at the crate root (`#[macro_export]`), so call them
+//! through the crate name — e.g. `tap::commands! { ... }`, `tap::bail!(...)`,
+//! `tap::cprintln!(...)`.
+//!
+//! # Contents
+//!
+//! | Category             | Items                                                                    |
+//! |----------------------|--------------------------------------------------------------------------|
+//! | Helpers              | [`arg`], [`arg_str`], [`arg_or`], [`arg_str_or`], [`arg_str_opt`]        |
+//! | Registration         | [`commands!`], [`subcommands!`]                                          |
+//! | Argument parsing     | [`args!`]                                                                |
+//! | Errors               | [`bail!`], [`ensure!`]                                                   |
+//! | Output               | [`cprint!`], [`cprintln!`], [`ceprintln!`]                               |
+//! | Scopes / templates   | [`scope!`], [`template!`], [`template_colored!`]                         |
+//!
+//! # Typical usage
+//!
+//! ```ignore
+//! use tap::{commands, args, bail, ensure};
+//!
+//! commands! {
+//!     engine;
+//!     "add" | "a" => my_add {
+//!         required: ["x", "y"],
+//!         docs: "Add two numbers",
+//!     }
+//!     "greet" => my_greet {
+//!         required: ["name"],
+//!         optional: ["greeting"],
+//!         docs: "Say hello",
+//!     }
+//! }
+//!
+//! fn my_add(_: &mut Engine, args: &[&str]) -> ErrorType {
+//!     args! { args;
+//!         x: i64,
+//!         y: i64,
+//!     }
+//!     println!("{}", x + y);
+//!     Ok(())
+//! }
+//! ```
+
+use std::str::FromStr;
+
+// ─────────────────────────────────────────────────────────────────────
+//  Helper functions
+// ─────────────────────────────────────────────────────────────────────
+
+/// Parses a required argument at index `i` into type `T`.
+///
+/// Returns an error when:
+///
+/// * no argument exists at index `i` — `"missing argument <name> (position i)"`;
+/// * the argument exists but fails to parse as `T` — `"argument <name>: <parser error>"`.
+///
+/// The error message includes `name` so users can tell which argument was
+/// wrong rather than receiving a bare parser error.
+pub fn arg<'a, T>(args: &[&'a str], i: usize, name: &str) -> Result<T, String>
+where
+    T: FromStr,
+    T::Err: std::fmt::Display,
+{
+    let s = args
+        .get(i)
+        .ok_or_else(|| format!("missing argument <{}> (position {})", name, i))?;
+    s.parse()
+        .map_err(|e| format!("argument <{}>: {}", name, e))
+}
+
+/// Returns a required argument at index `i` as a string slice.
+///
+/// Unlike [`arg`], no parsing is performed. Errors only when the argument is
+/// missing.
+pub fn arg_str<'a>(args: &[&'a str], i: usize, name: &str) -> Result<&'a str, String> {
+    args.get(i)
+        .copied()
+        .ok_or_else(|| format!("missing argument <{}> (position {})", name, i))
+}
+
+/// Like [`arg`], but falls back to `default` when the argument is absent.
+///
+/// Parsing errors are still reported — if the argument is present, it must
+/// parse as `T`.
+pub fn arg_or<'a, T>(args: &[&'a str], i: usize, name: &str, default: T) -> Result<T, String>
+where
+    T: FromStr,
+    T::Err: std::fmt::Display,
+{
+    match args.get(i) {
+        Some(s) => s.parse().map_err(|e| format!("argument <{}>: {}", name, e)),
+        None => Ok(default),
+    }
+}
+
+/// Like [`arg_str`], but returns `default` when the argument is absent.
+///
+/// Never fails.
+pub fn arg_str_or<'a>(args: &[&'a str], i: usize, default: &'a str) -> &'a str {
+    args.get(i).copied().unwrap_or(default)
+}
+
+/// Returns the argument at index `i` if present, otherwise `None`.
+///
+/// Never fails.
+pub fn arg_str_opt<'a>(args: &[&'a str], i: usize) -> Option<&'a str> {
+    args.get(i).copied()
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  commands!
+// ─────────────────────────────────────────────────────────────────────
+
+/// Registers one or more top-level commands on an engine.
+///
+/// Each entry has the shape:
+///
+/// ```ignore
+/// "name" | "alias" => handler {
+///     required: ["arg1", "arg2"],   // optional field
+///     optional: ["arg3"],           // optional field
+///     unlimited: true,              // optional, defaults to false
+///     docs: "Description",          // required
+/// }
+/// ```
+///
+/// All fields except `docs` may be omitted. `required`, `optional` and
+/// `unlimited` default to empty/false.
+///
+/// # Example
+///
+/// ```ignore
+/// tap::commands! {
+///     engine;
+///     "echo" => cmd_echo {
+///         required: ["text"],
+///         docs: "Echo back the text",
+///     }
+///     "quit" | "exit" => cmd_quit {
+///         docs: "Exit the shell",
+///     }
+/// }
+/// ```
+#[macro_export]
+macro_rules! commands {
+    (
+        $engine:ident;
+        $(
+            $($name:literal)|+ => $handler:path {
+                $(required: [$($req:literal),* $(,)?],)?
+                $(optional: [$($opt:literal),* $(,)?],)?
+                $(unlimited: $unlim:literal,)?
+                docs: $docs:literal $(,)?
+            }
+        )*
+    ) => {{
+        $(
+            $engine.new_commands(
+                vec![$($name),+],
+                {
+                    let __tap_h: $crate::engine::structs::HandlerType =
+                        ::std::rc::Rc::new($handler);
+                    $crate::engine::structs::CmdInfo::new(
+                        __tap_h,
+                        vec![$($($req),*)?],
+                        vec![$($($opt),*)?],
+                        $crate::commands!(@unlim $($unlim)?),
+                        $docs,
+                    )
+                },
+            );
+        )*
+    }};
+
+    (@unlim $b:literal) => { $b };
+    (@unlim)            => { false };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  subcommands!
+// ─────────────────────────────────────────────────────────────────────
+
+/// Registers one or more subcommands on an engine.
+///
+/// Syntax is identical to [`commands!`], except that the handler must be a
+/// `SubHandlerType` (a plain function pointer, not an `Rc`).
+///
+/// # Example
+///
+/// ```ignore
+/// tap::subcommands! {
+///     engine;
+///     "set" => sub_set {
+///         required: ["key", "value"],
+///         docs: "Set a variable",
+///     }
+/// }
+/// ```
+#[macro_export]
+macro_rules! subcommands {
+    (
+        $engine:ident;
+        $(
+            $($name:literal)|+ => $handler:path {
+                $(required: [$($req:literal),* $(,)?],)?
+                $(optional: [$($opt:literal),* $(,)?],)?
+                $(unlimited: $unlim:literal,)?
+                docs: $docs:literal $(,)?
+            }
+        )*
+    ) => {{
+        $(
+            $engine.new_subcommands(
+                vec![$($name),+],
+                $crate::engine::structs::CmdInfo::new(
+                    $handler as $crate::engine::structs::SubHandlerType,
+                    vec![$($($req),*)?],
+                    vec![$($($opt),*)?],
+                    $crate::subcommands!(@unlim $($unlim)?),
+                    $docs,
+                ),
+            );
+        )*
+    }};
+
+    (@unlim $b:literal) => { $b };
+    (@unlim)            => { false };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  args!
+// ─────────────────────────────────────────────────────────────────────
+
+/// Binds handler arguments to typed local variables.
+///
+/// Syntax: `args! { <slice>; name: Type, name: Type = default, ... }`.
+///
+/// * `name: Type`             — required, parsed via [`arg`].
+/// * `name: Type = default`   — optional, parsed via [`arg_or`].
+///
+/// Each variable consumes one positional argument, so the order matters.
+/// The trailing comma is allowed and optional.
+///
+/// # Example
+///
+/// ```ignore
+/// fn handler(_: &mut Engine, args: &[&str]) -> ErrorType {
+///     args! { args;
+///         count: u32,
+///         label: String = "default".to_string(),
+///         verbose: bool = false,
+///     }
+///     // ...
+///     Ok(())
+/// }
+/// ```
+#[macro_export]
+macro_rules! args {
+    ($args:expr; $($rest:tt)*) => {
+        let __tap_args: &[&str] = $args;
+        let mut __tap_i: usize = 0usize;
+        $crate::args!(@next __tap_args, __tap_i, $($rest)*);
+        let _ = __tap_i;
+    };
+
+    (@next $args:ident, $i:ident,) => {};
+
+    (@next $args:ident, $i:ident, $name:ident : $ty:ty = $default:expr, $($rest:tt)*) => {
+        let $name: $ty = $crate::macros::arg_or(
+            $args, $i, stringify!($name), $default
+        )?;
+        $i += 1;
+        $crate::args!(@next $args, $i, $($rest)*);
+    };
+
+    (@next $args:ident, $i:ident, $name:ident : $ty:ty = $default:expr) => {
+        let $name: $ty = $crate::macros::arg_or(
+            $args, $i, stringify!($name), $default
+        )?;
+        $i += 1;
+        $crate::args!(@next $args, $i,);
+    };
+
+    (@next $args:ident, $i:ident, $name:ident : $ty:ty, $($rest:tt)*) => {
+        let $name: $ty = $crate::macros::arg(
+            $args, $i, stringify!($name)
+        )?;
+        $i += 1;
+        $crate::args!(@next $args, $i, $($rest)*);
+    };
+
+    (@next $args:ident, $i:ident, $name:ident : $ty:ty) => {
+        let $name: $ty = $crate::macros::arg(
+            $args, $i, stringify!($name)
+        )?;
+        $i += 1;
+        $crate::args!(@next $args, $i,);
+    };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  Error helpers — `bail!` / `ensure!`
+// ─────────────────────────────────────────────────────────────────────
+
+/// Early-returns an error from a handler.
+///
+/// Accepts either a literal/expression convertible into the handler's error
+/// type, or a `format!`-style format string with arguments.
+///
+/// ```ignore
+/// fn h(_: &mut Engine, args: &[&str]) -> ErrorType {
+///     if args.is_empty() { bail!("at least one argument required"); }
+///     let n: u32 = args[0].parse().map_err(|_| format!("bad number: {}", args[0]))?;
+///     ensure!(n > 0, "must be positive, got {}", n);
+///     Ok(())
+/// }
+/// ```
+#[macro_export]
+macro_rules! bail {
+    ($msg:literal $(,)?) => {
+        return ::std::result::Result::Err($msg.into())
+    };
+    ($err:expr $(,)?) => {
+        return ::std::result::Result::Err($err.into())
+    };
+    ($fmt:expr, $($arg:tt)*) => {
+        return ::std::result::Result::Err(format!($fmt, $($arg)*).into())
+    };
+}
+
+/// Conditional [`bail!`]: returns an error when the condition is false.
+///
+/// ```ignore
+/// ensure!(count <= 10, "too many items: {}", count);
+/// ensure!(flag, "flag must be set");
+/// ```
+#[macro_export]
+macro_rules! ensure {
+    ($cond:expr, $msg:literal $(,)?) => {
+        if !$cond { $crate::bail!($msg) }
+    };
+    ($cond:expr, $err:expr $(,)?) => {
+        if !$cond { $crate::bail!($err) }
+    };
+    ($cond:expr, $fmt:expr, $($arg:tt)*) => {
+        if !$cond { $crate::bail!($fmt, $($arg)*) }
+    };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  Colored printing — `cprint!` / `cprintln!` / `ceprintln!`
+// ─────────────────────────────────────────────────────────────────────
+
+/// Colored `print!`.
+///
+/// The formatted string is passed through
+/// `tooling::colors::set::colorize` before writing to stdout.
+#[macro_export]
+macro_rules! cprint {
+    ($($arg:tt)*) => {
+        ::std::print!("{}", $crate::tooling::colors::set::colorize(&format!($($arg)*)))
+    };
+}
+
+/// Colored `println!`.
+///
+/// With no arguments, emits a plain newline (no colorization needed).
+/// Otherwise formats and colorizes the output.
+#[macro_export]
+macro_rules! cprintln {
+    () => { ::std::println!() };
+    ($($arg:tt)*) => {
+        ::std::println!("{}", $crate::tooling::colors::set::colorize(&format!($($arg)*)))
+    };
+}
+
+/// Colored `eprintln!` — writes to stderr.
+#[macro_export]
+macro_rules! ceprintln {
+    ($($arg:tt)*) => {
+        ::std::eprintln!("{}", $crate::tooling::colors::set::colorize(&format!($($arg)*)))
+    };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  Renderable shortcuts — `scope!` / `template!` / `template_colored!`
+// ─────────────────────────────────────────────────────────────────────
+
+/// Populates `Renderable::scope` with `key => value` pairs.
+///
+/// The `key` may include a `:type` suffix (e.g. `"version:int"`) that is
+/// interpreted by the renderer downstream.
+///
+/// ```ignore
+/// scope!(r;
+///     "name" => "Rust",
+///     "version:int" => "1",
+///     "stable:bool" => "true",
+/// );
+/// ```
+#[macro_export]
+macro_rules! scope {
+    ($r:expr; $($key:literal => $val:expr),* $(,)?) => {{
+        $($r.scope.insert($key, $val);)*
+    }};
+}
+
+/// Adds a plain template renderer.
+///
+/// ```ignore
+/// template!(r, "plain", "Hello, {{name}}");
+/// ```
+#[macro_export]
+macro_rules! template {
+    ($r:expr, $name:expr, $templ:expr) => {
+        $crate::tooling::renderable::add_template_render($templ, $name, &mut $r)
+    };
+}
+
+/// Adds a colored template renderer.
+///
+/// The rendered result is passed through `colorize`, so `[?GN]…[?RT]` style
+/// color codes are resolved.
+///
+/// ```ignore
+/// template_colored!(r, "colored", "[?GN]Hello, {{name}}[?RT]");
+/// ```
+#[macro_export]
+macro_rules! template_colored {
+    ($r:expr, $name:expr, $templ:expr) => {
+        $crate::tooling::renderable::add_template_render_colored($templ, $name, &mut $r)
+    };
+}
+````
+
 ## `src/tap/mod.rs`
 
 ```rust
 pub mod argsparsing;
 pub mod engine;
 pub mod tooling;
+pub mod macros;
 ```
 
 ## `src/tap/tooling.rs`
@@ -744,6 +1218,30 @@ pub mod colors;
 pub mod console;
 pub mod formatting;
 pub mod renderable;
+use std::rc::Rc;
+
+use crate::{
+    engine::structs::{CmdInfo, Engine, ErrorType},
+    tooling::formatting::help::generate_help,
+};
+
+pub fn help_handler(e: &mut Engine, _: &[&str]) -> ErrorType {
+    println!("{}", generate_help(e));
+    Ok(())
+}
+
+pub fn add_help_handler<'a>(names: Vec<&'a str>, e: &mut Engine<'a>) {
+    e.new_commands(
+        names,
+        CmdInfo::new(
+            Rc::new(help_handler),
+            vec![],
+            vec![],
+            false,
+            "Generate and print help message",
+        ),
+    );
+}
 ```
 
 ## `src/tap/tooling/colors.rs`
@@ -758,7 +1256,6 @@ pub mod set;
 ```rust
 pub mod colors;
 pub mod console;
-pub mod engine;
 pub mod styles;
 ```
 
@@ -825,6 +1322,7 @@ impl<'a> fmt::Debug for Renderable<'a> {
 enum Kind {
     Str,
     Int,
+    Float,
     Bool,
     Raw,
 }
@@ -832,6 +1330,8 @@ enum Kind {
 fn split_kind(key: &str) -> (&str, Kind) {
     if let Some(k) = key.strip_suffix(":int") {
         (k, Kind::Int)
+    } else if let Some(k) = key.strip_suffix(":float") {
+        (k, Kind::Float)
     } else if let Some(k) = key.strip_suffix(":bool") {
         (k, Kind::Bool)
     } else if let Some(k) = key.strip_suffix(":raw") {
@@ -867,10 +1367,20 @@ impl<'a> Renderable<'a> {
             match kind {
                 Kind::Str => push_json_string(&mut out, value),
                 Kind::Int => {
-                    if value.parse::<f64>().is_err() {
+                    if !is_json_int(value) {
                         return Err(RenderError::InvalidValue {
                             key: name.to_string(),
                             kind: "int",
+                            value: value.to_string(),
+                        });
+                    }
+                    out.push_str(value);
+                }
+                Kind::Float => {
+                    if !is_json_number(value) {
+                        return Err(RenderError::InvalidValue {
+                            key: name.to_string(),
+                            kind: "float",
                             value: value.to_string(),
                         });
                     }
@@ -964,6 +1474,65 @@ fn push_json_string(out: &mut String, s: &str) {
         }
     }
     out.push('"');
+}
+
+// JSON int: -?(0|[1-9][0-9]*)
+fn is_json_int(s: &str) -> bool {
+    let b = s.as_bytes();
+    let mut i = 0;
+    if i < b.len() && b[i] == b'-' {
+        i += 1;
+    }
+    match b.get(i) {
+        Some(b'0') => i += 1,
+        Some(c) if c.is_ascii_digit() => {
+            while i < b.len() && b[i].is_ascii_digit() {
+                i += 1;
+            }
+        }
+        _ => return false,
+    }
+    i == b.len()
+}
+
+// JSON number: -?int(\.\d+)?([eE][+-]?\d+)?
+fn is_json_number(s: &str) -> bool {
+    let b = s.as_bytes();
+    let mut i = 0;
+    if i < b.len() && b[i] == b'-' {
+        i += 1;
+    }
+    match b.get(i) {
+        Some(b'0') => i += 1,
+        Some(c) if c.is_ascii_digit() => {
+            while i < b.len() && b[i].is_ascii_digit() {
+                i += 1;
+            }
+        }
+        _ => return false,
+    }
+    if i < b.len() && b[i] == b'.' {
+        i += 1;
+        if i >= b.len() || !b[i].is_ascii_digit() {
+            return false;
+        }
+        while i < b.len() && b[i].is_ascii_digit() {
+            i += 1;
+        }
+    }
+    if i < b.len() && (b[i] == b'e' || b[i] == b'E') {
+        i += 1;
+        if i < b.len() && (b[i] == b'+' || b[i] == b'-') {
+            i += 1;
+        }
+        if i >= b.len() || !b[i].is_ascii_digit() {
+            return false;
+        }
+        while i < b.len() && b[i].is_ascii_digit() {
+            i += 1;
+        }
+    }
+    i == b.len()
 }
 ```
 
@@ -1137,10 +1706,7 @@ pub fn generate_help(eng: &Engine) -> String {
         }
     }
     for cmd in subcommands {
-        let block = &format!(
-            "- [?YW]Docs[?RT]:\n{}",
-            add_space(&cmd.info.docs, " ", 1)
-        );
+        let block = &format!("- [?YW]Docs[?RT]:\n{}", add_space(&cmd.info.docs, " ", 1));
         let cmd = &colorize(&format!(
             "[?BGN] Command [?BKBK][?BBK][[?BKBK][?YW]{}[?BBK]][?RT]",
             cmd.commands.join(" [?GN]OR[?YW] ")
@@ -1454,35 +2020,6 @@ impl Console {
 }
 ```
 
-## `src/tap/tooling/console/engine.rs`
-
-```rust
-use std::rc::Rc;
-
-use crate::{
-    engine::structs::{CmdInfo, Engine, ErrorType},
-    tooling::formatting::help::generate_help,
-};
-
-fn help_handler(e: &mut Engine, _: &[&str]) -> ErrorType {
-    println!("{}", generate_help(e));
-    Ok(())
-}
-
-pub fn add_help_handler<'a>(names: Vec<&'a str>, e: &mut Engine<'a>) {
-    e.new_commands(
-        names,
-        CmdInfo::new(
-            Rc::new(help_handler),
-            vec![],
-            vec![],
-            false,
-            "Generate and print help message",
-        ),
-    );
-}
-```
-
 ## `src/tap/tooling/console/styles.rs`
 
 ```rust
@@ -1670,6 +2207,7 @@ use crate::engine::structs::{
 };
 use std::collections::HashMap;
 use std::env;
+use std::str::FromStr;
 
 pub struct EngineGetter<'a> {
     pub e: &'a Engine<'a>,
@@ -1729,7 +2267,7 @@ impl<'a> Engine<'a> {
     }
 
     pub fn work(&mut self, args: &[&str]) -> ErrorType {
-        self.args_p.parse_agrs_to_self(args);
+        self.args_p.parse_args_to_self(args);
         if self.args_p.args.is_empty() {
             println!("{}", self.about);
             return Err("No command provided".into());
@@ -1746,6 +2284,26 @@ impl<'a> Engine<'a> {
         self.work(&refs)
     }
 }
+
+impl Engine<'_> {
+    pub fn flag(&self, name: &str) -> bool {
+        self.args_p.flags.iter().any(|f| f == name)
+    }
+
+    pub fn value(&self, name: &str) -> Option<&str> {
+        self.args_p.values.get(name).map(String::as_str)
+    }
+
+    pub fn value_t<T: FromStr>(&self, name: &str) -> Result<Option<T>, String>
+    where
+        T::Err: std::fmt::Display,
+    {
+        match self.args_p.values.get(name) {
+            Some(s) => s.parse().map(Some).map_err(|e| format!("--{}: {}", name, e)),
+            None => Ok(None),
+        }
+    }
+}
 ```
 
 ## `src/tap/engine/structs.rs`
@@ -1757,7 +2315,7 @@ use std::{collections::HashMap, rc::Rc};
 pub type ErrorType = Result<(), Box<dyn std::error::Error>>;
 
 pub type RawHandlerType = dyn Fn(&mut Engine<'_>, &[&str]) -> ErrorType;
-pub type HandlerType    = Rc<RawHandlerType>;
+pub type HandlerType = Rc<RawHandlerType>;
 pub type SubHandlerType = fn(&[&str]) -> ErrorType;
 
 pub type CmdInfoCmd<'a> = CmdInfo<'a, HandlerType>;
@@ -1788,100 +2346,137 @@ pub struct Engine<'a> {
 ## `examples/demo.rs`
 
 ```rust
-use std::rc::Rc;
+//! Tap demo — the main library features in one small CLI.
+//!
+//! Try:
+//!     cargo run --example demo -- help
+//!     cargo run --example demo -- version
+//!     cargo run --example demo -- greet Rust
+//!     cargo run --example demo -- greet --loud Rust
+//!     cargo run --example demo -- add 2 3.5
+//!     cargo run --example demo -- serve 127.0.0.1 8080 --verbose --tls=on --workers=8
+//!     cargo run --example demo -- report
+//!     cargo run --example demo -- echo hello world
 
 use tap::{
     argsparsing::ArgsP,
-    engine::structs::{CmdInfo, Engine, ErrorType, HandlerType},
-    tooling::{
-        colors::print::println as cprintln,
-        console::engine::add_help_handler,
-        renderable::{add_template_render, add_template_render_colored, Renderable},
-    },
+    args, commands, cprintln, ensure, scope, subcommands, template, template_colored,
+    engine::structs::{Engine, ErrorType},
+    tooling::{add_help_handler, renderable::Renderable},
 };
 
-// ---- handlers ---------------------------------------------------------------
+// ── Handlers ─────────────────────────────────────────────────────────
 
-fn greet_handler(e: &mut Engine, args: &[&str]) -> ErrorType {
-    let name = args.first().copied().unwrap_or("World");
-    cprintln(&format!("[?BGN]Hello, [?YW]{}[?BGN]![?RT]", name));
-    if e.args_p.flags.iter().any(|f| f == "loud") {
-        cprintln("[?BD][?RD]>>> LOUD MODE ON <<<[?RT]");
+/// `greet [name] [--loud]` — friendly greeting.
+fn greet_handler(e: &mut Engine, raw: &[&str]) -> ErrorType {
+    args! { raw;
+        name: String = "World".to_string(),
+    }
+    cprintln!("[?BGN]Hello, [?YW]{}[?BGN]![?RT]", name);
+    if e.flag("loud") {
+        cprintln!("[?BD][?RD]>>> LOUD MODE ON <<<[?RT]");
     }
     Ok(())
 }
 
-fn add_handler(_: &mut Engine, args: &[&str]) -> ErrorType {
-    let a: f64 = args[0].parse().map_err(|_| format!("bad number: {}", args[0]))?;
-    let b: f64 = args[1].parse().map_err(|_| format!("bad number: {}", args[1]))?;
-    cprintln(&format!("[?GN]{} + {} = [?BGN]{}[?RT]", a, b, a + b));
+/// `add <a> <b>` — typed parsing with helpful errors on bad input.
+fn add_handler(_: &mut Engine, raw: &[&str]) -> ErrorType {
+    args! { raw;
+        a: f64,
+        b: f64,
+    }
+    cprintln!("[?GN]{} + {} = [?BGN]{}[?RT]", a, b, a + b);
     Ok(())
 }
 
-fn serve_handler(e: &mut Engine, args: &[&str]) -> ErrorType {
-    let host = args[0];
-    let port = args[1];
-    let verbose = e.args_p.flags.iter().any(|f| f == "verbose");
-    let tls = e.args_p.values.get("tls").map(String::as_str).unwrap_or("off");
-    cprintln("[?YW]Starting server...[?RT]");
-    cprintln(&format!("  [?CN]host[?RT]    = {}", host));
-    cprintln(&format!("  [?CN]port[?RT]    = {}", port));
-    cprintln(&format!("  [?CN]tls[?RT]     = {}", tls));
-    cprintln(&format!("  [?CN]verbose[?RT] = {}", verbose));
+/// `serve [host] [port] [--verbose] [--tls=on|off|auto] [--workers=N]`
+fn serve_handler(e: &mut Engine, raw: &[&str]) -> ErrorType {
+    args! { raw;
+        host: String = "127.0.0.1".to_string(),
+        port: u16 = 8080,
+    }
+    ensure!(port > 0, "port must be positive (got {})", port);
+
+    let verbose = e.flag("verbose");
+    let tls = e.value("tls").unwrap_or("off");
+    ensure!(
+        matches!(tls, "on" | "off" | "auto"),
+        "invalid --tls value {:?} (expected on|off|auto)",
+        tls
+    );
+    let workers: u16 = e.value_t("workers")?.unwrap_or(4);
+    ensure!(workers > 0, "--workers must be positive");
+
+    cprintln!("[?YW]Starting server...[?RT]");
+    cprintln!("  [?CN]host[?RT]    = {}", host);
+    cprintln!("  [?CN]port[?RT]    = {}", port);
+    cprintln!("  [?CN]tls[?RT]     = {}", tls);
+    cprintln!("  [?CN]workers[?RT] = {}", workers);
+    cprintln!("  [?CN]verbose[?RT] = {}", verbose);
     Ok(())
 }
 
+/// `report` — render templates and JSON via `tooling::renderable`.
 fn report_handler(_: &mut Engine, _: &[&str]) -> ErrorType {
     let mut r = Renderable::new();
-    r.scope.insert("name", "Tap");
-    r.scope.insert("version:int", "156");
-    r.scope.insert("stable:bool", "true");
-    r.scope.insert("tag", "tap-rs");
+    scope!(r;
+        "name"        => "Tap",
+        "version:int" => "156",
+        "stable:bool" => "true",
+        "tag"         => "tap-rs",
+    );
+    template!(r, "plain", "Hello, {{name}} v{{version}} ({{tag}})");
+    template_colored!(r, "colored", "[?BGN]Hello, {{name}} [?YW]v{{version}}[?RT]");
 
-    add_template_render("Hello, {{name}} v{{version}}", "plain", &mut r);
-    add_template_render_colored("[?BGN]Hello, {{name}} [?YW]v{{version}}[?RT]", "colored", &mut r);
-
-    cprintln("[?DM]--- plain ---[?RT]");
+    cprintln!("[?DM]--- plain ---[?RT]");
     println!("{}", r.render_with("plain")?);
-    cprintln("[?DM]--- colored ---[?RT]");
+    cprintln!("[?DM]--- colored ---[?RT]");
     println!("{}", r.render_with("colored")?);
-    cprintln("[?DM]--- json ---[?RT]");
+    cprintln!("[?DM]--- json ---[?RT]");
     println!("{}", r.render_json()?);
     Ok(())
 }
 
-// ---- wiring -----------------------------------------------------------------
+/// `version` — command with no arguments.
+fn version_handler(_: &mut Engine, _: &[&str]) -> ErrorType {
+    cprintln!("[?BGN]tap-rs[?RT] v[?YW]1.6.1[?RT]");
+    Ok(())
+}
+
+/// `echo ...` — subcommand: plain `fn(&[&str])`, no `Engine` access.
+fn echo_handler(raw: &[&str]) -> ErrorType {
+    ensure!(!raw.is_empty(), "nothing to echo");
+    cprintln!("[?GN]echo:[?RT] {}", raw.join(" "));
+    Ok(())
+}
+
+// ── Wiring ───────────────────────────────────────────────────────────
 
 fn main() {
     let mut ap = ArgsP::new();
-    let mut engine = Engine::new(&mut ap, "TAP DEMO — simple but powerful".to_string());
+    let mut engine = Engine::new(&mut ap, "TAP DEMO — lightweight CLI parsing".to_string());
 
-    let greet_h:  HandlerType = Rc::new(greet_handler);
-    let add_h:    HandlerType = Rc::new(add_handler);
-    let serve_h:  HandlerType = Rc::new(serve_handler);
-    let report_h: HandlerType = Rc::new(report_handler);
+    commands! {
+        engine;
+        "greet"   => greet_handler   { optional: ["name"],         docs: "Greet someone. Flag: --loud" }
+        "add"     => add_handler     { required: ["a", "b"],       docs: "Sum two numbers" }
+        "serve"   => serve_handler   { optional: ["host", "port"], docs: "Start a server. Flags: --verbose, --tls=on|off|auto, --workers=N" }
+        "report"  => report_handler  {                             docs: "Render templates and JSON" }
+        "version" => version_handler {                             docs: "Print version" }
+    }
 
-    engine.new_command("greet", CmdInfo::new(
-        greet_h, vec![], vec!["name"], false,
-        "Greet someone. Optional: name. Flag: --loud",
-    ));
-    engine.new_command("add", CmdInfo::new(
-        add_h, vec!["a", "b"], vec![], false,
-        "Sum two numbers",
-    ));
-    engine.new_command("serve", CmdInfo::new(
-        serve_h, vec!["host", "port"], vec![], false,
-        "Start a server. Flags: --verbose, --tls=on|off",
-    ));
-    engine.new_command("report", CmdInfo::new(
-        report_h, vec![], vec![], false,
-        "Render templates + JSON",
-    ));
+    subcommands! {
+        engine;
+        "echo" | "say" => echo_handler {
+            unlimited: true,
+            docs: "Echo back all arguments (subcommand)."
+        }
+    }
 
-    add_help_handler(vec!["help", "-h", "--help"], &mut engine);
+    add_help_handler(vec!["help", "-h"], &mut engine);
 
     if let Err(e) = engine.main() {
-        eprintln!("[error] {}", e);
+        cprintln!("[?RD][error][?RT] {}", e);
         std::process::exit(1);
     }
 }

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
 pub struct ArgsP {
     pub args: Vec<String>,
@@ -36,7 +36,7 @@ impl ArgsP {
             let s0 = split[0];
             let sch = Self::count_leading_same_chars(s0);
 
-            if *arg == "--" {
+            if *arg == "--" && can_be_flag {
                 can_be_flag = !can_be_flag;
                 continue;
             }
@@ -54,10 +54,35 @@ impl ArgsP {
         (flags, values, r_args)
     }
 
-    pub fn parse_agrs_to_self(&mut self, args: &[&str]) {
+    pub fn parse_args_to_self(&mut self, args: &[&str]) {
         let (flags, values, r_args) = Self::parse_args(args);
         self.flags = flags;
         self.values = values;
         self.args = r_args;
+    }
+}
+
+
+pub trait ArgsExt {
+    fn arg<T: FromStr>(&self, i: usize) -> Result<T, String>
+    where
+        T::Err: std::fmt::Display;
+
+    fn arg_or<'a>(&'a self, i: usize, default: &'a str) -> &'a str;
+}
+
+impl ArgsExt for [&str] {
+    fn arg<T: FromStr>(&self, i: usize) -> Result<T, String>
+    where
+        T::Err: std::fmt::Display,
+    {
+        self.get(i)
+            .ok_or_else(|| format!("missing argument #{}", i))?
+            .parse()
+            .map_err(|e| format!("invalid argument #{}: {}", i, e))
+    }
+
+    fn arg_or<'a>(&'a self, i: usize, default: &'a str) -> &'a str {
+        self.get(i).copied().unwrap_or(default)
     }
 }

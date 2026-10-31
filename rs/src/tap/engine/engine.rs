@@ -4,6 +4,7 @@ use crate::engine::structs::{
 };
 use std::collections::HashMap;
 use std::env;
+use std::str::FromStr;
 
 pub struct EngineGetter<'a> {
     pub e: &'a Engine<'a>,
@@ -63,7 +64,7 @@ impl<'a> Engine<'a> {
     }
 
     pub fn work(&mut self, args: &[&str]) -> ErrorType {
-        self.args_p.parse_agrs_to_self(args);
+        self.args_p.parse_args_to_self(args);
         if self.args_p.args.is_empty() {
             println!("{}", self.about);
             return Err("No command provided".into());
@@ -78,5 +79,25 @@ impl<'a> Engine<'a> {
         let args: Vec<String> = env::args().skip(1).collect();
         let refs: Vec<&str> = args.iter().map(String::as_str).collect();
         self.work(&refs)
+    }
+}
+
+impl Engine<'_> {
+    pub fn flag(&self, name: &str) -> bool {
+        self.args_p.flags.iter().any(|f| f == name)
+    }
+
+    pub fn value(&self, name: &str) -> Option<&str> {
+        self.args_p.values.get(name).map(String::as_str)
+    }
+
+    pub fn value_t<T: FromStr>(&self, name: &str) -> Result<Option<T>, String>
+    where
+        T::Err: std::fmt::Display,
+    {
+        match self.args_p.values.get(name) {
+            Some(s) => s.parse().map(Some).map_err(|e| format!("--{}: {}", name, e)),
+            None => Ok(None),
+        }
     }
 }

@@ -1,122 +1,134 @@
-use std::rc::Rc;
+//! Tap demo — the main library features in one small CLI.
+//!
+//! Try:
+//!     cargo run --example demo -- help
+//!     cargo run --example demo -- version
+//!     cargo run --example demo -- greet Rust
+//!     cargo run --example demo -- greet --loud Rust
+//!     cargo run --example demo -- add 2 3.5
+//!     cargo run --example demo -- serve 127.0.0.1 8080 --verbose --tls=on --workers=8
+//!     cargo run --example demo -- report
+//!     cargo run --example demo -- echo hello world
 
 use tap::{
     argsparsing::ArgsP,
-    engine::structs::{CmdInfo, Engine, ErrorType, HandlerType},
-    tooling::{
-        colors::print::println as cprintln,
-        console::engine::add_help_handler,
-        renderable::{Renderable, add_template_render, add_template_render_colored},
-    },
+    args, commands, cprintln, ensure, scope, subcommands, template, template_colored,
+    engine::structs::{Engine, ErrorType},
+    tooling::{add_help_handler, renderable::Renderable},
 };
 
-// ---- handlers ---------------------------------------------------------------
+// ── Handlers ─────────────────────────────────────────────────────────
 
-fn greet_handler(e: &mut Engine, args: &[&str]) -> ErrorType {
-    let name = args.first().copied().unwrap_or("World");
-    cprintln(&format!("[?BGN]Hello, [?YW]{}[?BGN]![?RT]", name));
-    if e.args_p.flags.iter().any(|f| f == "loud") {
-        cprintln("[?BD][?RD]>>> LOUD MODE ON <<<[?RT]");
+/// `greet [name] [--loud]` — friendly greeting.
+fn greet_handler(e: &mut Engine, raw: &[&str]) -> ErrorType {
+    args! { raw;
+        name: String = "World".to_string(),
+    }
+    cprintln!("[?BGN]Hello, [?YW]{}[?BGN]![?RT]", name);
+    if e.flag("loud") {
+        cprintln!("[?BD][?RD]>>> LOUD MODE ON <<<[?RT]");
     }
     Ok(())
 }
 
-fn add_handler(_: &mut Engine, args: &[&str]) -> ErrorType {
-    let a: f64 = args[0]
-        .parse()
-        .map_err(|_| format!("bad number: {}", args[0]))?;
-    let b: f64 = args[1]
-        .parse()
-        .map_err(|_| format!("bad number: {}", args[1]))?;
-    cprintln(&format!("[?GN]{} + {} = [?BGN]{}[?RT]", a, b, a + b));
+/// `add <a> <b>` — typed parsing with helpful errors on bad input.
+fn add_handler(_: &mut Engine, raw: &[&str]) -> ErrorType {
+    args! { raw;
+        a: f64,
+        b: f64,
+    }
+    cprintln!("[?GN]{} + {} = [?BGN]{}[?RT]", a, b, a + b);
     Ok(())
 }
 
-fn serve_handler(e: &mut Engine, args: &[&str]) -> ErrorType {
-    let host = args[0];
-    let port = args[1];
-    let verbose = e.args_p.flags.iter().any(|f| f == "verbose");
-    let tls = e
-        .args_p
-        .values
-        .get("tls")
-        .map(String::as_str)
-        .unwrap_or("off");
-    cprintln("[?YW]Starting server...[?RT]");
-    cprintln(&format!("  [?CN]host[?RT]    = {}", host));
-    cprintln(&format!("  [?CN]port[?RT]    = {}", port));
-    cprintln(&format!("  [?CN]tls[?RT]     = {}", tls));
-    cprintln(&format!("  [?CN]verbose[?RT] = {}", verbose));
+/// `serve [host] [port] [--verbose] [--tls=on|off|auto] [--workers=N]`
+fn serve_handler(e: &mut Engine, raw: &[&str]) -> ErrorType {
+    args! { raw;
+        host: String = "127.0.0.1".to_string(),
+        port: u16 = 8080,
+    }
+    ensure!(port > 0, "port must be positive (got {})", port);
+
+    let verbose = e.flag("verbose");
+    let tls = e.value("tls").unwrap_or("off");
+    ensure!(
+        matches!(tls, "on" | "off" | "auto"),
+        "invalid --tls value {:?} (expected on|off|auto)",
+        tls
+    );
+    let workers: u16 = e.value_t("workers")?.unwrap_or(4);
+    ensure!(workers > 0, "--workers must be positive");
+
+    cprintln!("[?YW]Starting server...[?RT]");
+    cprintln!("  [?CN]host[?RT]    = {}", host);
+    cprintln!("  [?CN]port[?RT]    = {}", port);
+    cprintln!("  [?CN]tls[?RT]     = {}", tls);
+    cprintln!("  [?CN]workers[?RT] = {}", workers);
+    cprintln!("  [?CN]verbose[?RT] = {}", verbose);
     Ok(())
 }
 
+/// `report` — render templates and JSON via `tooling::renderable`.
 fn report_handler(_: &mut Engine, _: &[&str]) -> ErrorType {
     let mut r = Renderable::new();
-    r.scope.insert("name", "Tap");
-    r.scope.insert("version:int", "156");
-    r.scope.insert("stable:bool", "true");
-    r.scope.insert("tag", "tap-rs");
-
-    add_template_render("Hello, {{name}} v{{version}}", "plain", &mut r);
-    add_template_render_colored(
-        "[?BGN]Hello, {{name}} [?YW]v{{version}}[?RT]",
-        "colored",
-        &mut r,
+    scope!(r;
+        "name"        => "Tap",
+        "version:int" => "156",
+        "stable:bool" => "true",
+        "tag"         => "tap-rs",
     );
+    template!(r, "plain", "Hello, {{name}} v{{version}} ({{tag}})");
+    template_colored!(r, "colored", "[?BGN]Hello, {{name}} [?YW]v{{version}}[?RT]");
 
-    cprintln("[?DM]--- plain ---[?RT]");
+    cprintln!("[?DM]--- plain ---[?RT]");
     println!("{}", r.render_with("plain")?);
-    cprintln("[?DM]--- colored ---[?RT]");
+    cprintln!("[?DM]--- colored ---[?RT]");
     println!("{}", r.render_with("colored")?);
-    cprintln("[?DM]--- json ---[?RT]");
+    cprintln!("[?DM]--- json ---[?RT]");
     println!("{}", r.render_json()?);
     Ok(())
 }
 
-// ---- wiring -----------------------------------------------------------------
+/// `version` — command with no arguments.
+fn version_handler(_: &mut Engine, _: &[&str]) -> ErrorType {
+    cprintln!("[?BGN]tap-rs[?RT] v[?YW]1.6.1[?RT]");
+    Ok(())
+}
+
+/// `echo ...` — subcommand: plain `fn(&[&str])`, no `Engine` access.
+fn echo_handler(raw: &[&str]) -> ErrorType {
+    ensure!(!raw.is_empty(), "nothing to echo");
+    cprintln!("[?GN]echo:[?RT] {}", raw.join(" "));
+    Ok(())
+}
+
+// ── Wiring ───────────────────────────────────────────────────────────
 
 fn main() {
     let mut ap = ArgsP::new();
-    let mut engine = Engine::new(&mut ap, "TAP DEMO — simple but powerful".to_string());
+    let mut engine = Engine::new(&mut ap, "TAP DEMO — lightweight CLI parsing".to_string());
 
-    let greet_h: HandlerType = Rc::new(greet_handler);
-    let add_h: HandlerType = Rc::new(add_handler);
-    let serve_h: HandlerType = Rc::new(serve_handler);
-    let report_h: HandlerType = Rc::new(report_handler);
+    commands! {
+        engine;
+        "greet"   => greet_handler   { optional: ["name"],         docs: "Greet someone. Flag: --loud" }
+        "add"     => add_handler     { required: ["a", "b"],       docs: "Sum two numbers" }
+        "serve"   => serve_handler   { optional: ["host", "port"], docs: "Start a server. Flags: --verbose, --tls=on|off|auto, --workers=N" }
+        "report"  => report_handler  {                             docs: "Render templates and JSON" }
+        "version" => version_handler {                             docs: "Print version" }
+    }
 
-    engine.new_command(
-        "greet",
-        CmdInfo::new(
-            greet_h,
-            vec![],
-            vec!["name"],
-            false,
-            "Greet someone. Optional: name. Flag: --loud",
-        ),
-    );
-    engine.new_command(
-        "add",
-        CmdInfo::new(add_h, vec!["a", "b"], vec![], false, "Sum two numbers"),
-    );
-    engine.new_command(
-        "serve",
-        CmdInfo::new(
-            serve_h,
-            vec!["host", "port"],
-            vec![],
-            false,
-            "Start a server. Flags: --verbose, --tls=on|off",
-        ),
-    );
-    engine.new_command(
-        "report",
-        CmdInfo::new(report_h, vec![], vec![], false, "Render templates + JSON"),
-    );
+    subcommands! {
+        engine;
+        "echo" | "say" => echo_handler {
+            unlimited: true,
+            docs: "Echo back all arguments (subcommand)."
+        }
+    }
 
-    add_help_handler(vec!["help", "-h", "--help"], &mut engine);
+    add_help_handler(vec!["help", "-h"], &mut engine);
 
     if let Err(e) = engine.main() {
-        eprintln!("[error] {}", e);
+        cprintln!("[?RD][error][?RT] {}", e);
         std::process::exit(1);
     }
 }

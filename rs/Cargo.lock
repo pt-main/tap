@@ -57,7 +57,7 @@ dependencies = [
 
 [[package]]
 name = "tap-rs"
-version = "1.6.1"
+version = "1.6.3"
 dependencies = [
  "string_template",
 ]
