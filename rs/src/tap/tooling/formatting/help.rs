@@ -134,10 +134,7 @@ pub fn generate_help(eng: &Engine) -> String {
         }
     }
     for cmd in subcommands {
-        let block = &format!(
-            "- [?YW]Docs[?RT]:\n{}",
-            add_space(&cmd.info.docs, " ", 1)
-        );
+        let block = &format!("- [?YW]Docs[?RT]:\n{}", add_space(&cmd.info.docs, " ", 1));
         let cmd = &colorize(&format!(
             "[?BGN] Command [?BKBK][?BBK][[?BKBK][?YW]{}[?BBK]][?RT]",
             cmd.commands.join(" [?GN]OR[?YW] ")

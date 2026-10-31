@@ -51,6 +51,7 @@ impl<'a> fmt::Debug for Renderable<'a> {
 enum Kind {
     Str,
     Int,
+    Float,
     Bool,
     Raw,
 }
@@ -58,6 +59,8 @@ enum Kind {
 fn split_kind(key: &str) -> (&str, Kind) {
     if let Some(k) = key.strip_suffix(":int") {
         (k, Kind::Int)
+    } else if let Some(k) = key.strip_suffix(":float") {
+        (k, Kind::Float)
     } else if let Some(k) = key.strip_suffix(":bool") {
         (k, Kind::Bool)
     } else if let Some(k) = key.strip_suffix(":raw") {
@@ -93,10 +96,20 @@ impl<'a> Renderable<'a> {
             match kind {
                 Kind::Str => push_json_string(&mut out, value),
                 Kind::Int => {
-                    if value.parse::<f64>().is_err() {
+                    if !is_json_int(value) {
                         return Err(RenderError::InvalidValue {
                             key: name.to_string(),
                             kind: "int",
+                            value: value.to_string(),
+                        });
+                    }
+                    out.push_str(value);
+                }
+                Kind::Float => {
+                    if !is_json_number(value) {
+                        return Err(RenderError::InvalidValue {
+                            key: name.to_string(),
+                            kind: "float",
                             value: value.to_string(),
                         });
                     }
@@ -190,4 +203,63 @@ fn push_json_string(out: &mut String, s: &str) {
         }
     }
     out.push('"');
+}
+
+// JSON int: -?(0|[1-9][0-9]*)
+fn is_json_int(s: &str) -> bool {
+    let b = s.as_bytes();
+    let mut i = 0;
+    if i < b.len() && b[i] == b'-' {
+        i += 1;
+    }
+    match b.get(i) {
+        Some(b'0') => i += 1,
+        Some(c) if c.is_ascii_digit() => {
+            while i < b.len() && b[i].is_ascii_digit() {
+                i += 1;
+            }
+        }
+        _ => return false,
+    }
+    i == b.len()
+}
+
+// JSON number: -?int(\.\d+)?([eE][+-]?\d+)?
+fn is_json_number(s: &str) -> bool {
+    let b = s.as_bytes();
+    let mut i = 0;
+    if i < b.len() && b[i] == b'-' {
+        i += 1;
+    }
+    match b.get(i) {
+        Some(b'0') => i += 1,
+        Some(c) if c.is_ascii_digit() => {
+            while i < b.len() && b[i].is_ascii_digit() {
+                i += 1;
+            }
+        }
+        _ => return false,
+    }
+    if i < b.len() && b[i] == b'.' {
+        i += 1;
+        if i >= b.len() || !b[i].is_ascii_digit() {
+            return false;
+        }
+        while i < b.len() && b[i].is_ascii_digit() {
+            i += 1;
+        }
+    }
+    if i < b.len() && (b[i] == b'e' || b[i] == b'E') {
+        i += 1;
+        if i < b.len() && (b[i] == b'+' || b[i] == b'-') {
+            i += 1;
+        }
+        if i >= b.len() || !b[i].is_ascii_digit() {
+            return false;
+        }
+        while i < b.len() && b[i].is_ascii_digit() {
+            i += 1;
+        }
+    }
+    i == b.len()
 }

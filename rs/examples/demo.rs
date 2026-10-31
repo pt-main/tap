@@ -6,7 +6,7 @@ use tap::{
     tooling::{
         colors::print::println as cprintln,
         console::engine::add_help_handler,
-        renderable::{add_template_render, add_template_render_colored, Renderable},
+        renderable::{Renderable, add_template_render, add_template_render_colored},
     },
 };
 
@@ -22,8 +22,12 @@ fn greet_handler(e: &mut Engine, args: &[&str]) -> ErrorType {
 }
 
 fn add_handler(_: &mut Engine, args: &[&str]) -> ErrorType {
-    let a: f64 = args[0].parse().map_err(|_| format!("bad number: {}", args[0]))?;
-    let b: f64 = args[1].parse().map_err(|_| format!("bad number: {}", args[1]))?;
+    let a: f64 = args[0]
+        .parse()
+        .map_err(|_| format!("bad number: {}", args[0]))?;
+    let b: f64 = args[1]
+        .parse()
+        .map_err(|_| format!("bad number: {}", args[1]))?;
     cprintln(&format!("[?GN]{} + {} = [?BGN]{}[?RT]", a, b, a + b));
     Ok(())
 }
@@ -32,7 +36,12 @@ fn serve_handler(e: &mut Engine, args: &[&str]) -> ErrorType {
     let host = args[0];
     let port = args[1];
     let verbose = e.args_p.flags.iter().any(|f| f == "verbose");
-    let tls = e.args_p.values.get("tls").map(String::as_str).unwrap_or("off");
+    let tls = e
+        .args_p
+        .values
+        .get("tls")
+        .map(String::as_str)
+        .unwrap_or("off");
     cprintln("[?YW]Starting server...[?RT]");
     cprintln(&format!("  [?CN]host[?RT]    = {}", host));
     cprintln(&format!("  [?CN]port[?RT]    = {}", port));
@@ -49,7 +58,11 @@ fn report_handler(_: &mut Engine, _: &[&str]) -> ErrorType {
     r.scope.insert("tag", "tap-rs");
 
     add_template_render("Hello, {{name}} v{{version}}", "plain", &mut r);
-    add_template_render_colored("[?BGN]Hello, {{name}} [?YW]v{{version}}[?RT]", "colored", &mut r);
+    add_template_render_colored(
+        "[?BGN]Hello, {{name}} [?YW]v{{version}}[?RT]",
+        "colored",
+        &mut r,
+    );
 
     cprintln("[?DM]--- plain ---[?RT]");
     println!("{}", r.render_with("plain")?);
@@ -66,27 +79,39 @@ fn main() {
     let mut ap = ArgsP::new();
     let mut engine = Engine::new(&mut ap, "TAP DEMO — simple but powerful".to_string());
 
-    let greet_h:  HandlerType = Rc::new(greet_handler);
-    let add_h:    HandlerType = Rc::new(add_handler);
-    let serve_h:  HandlerType = Rc::new(serve_handler);
+    let greet_h: HandlerType = Rc::new(greet_handler);
+    let add_h: HandlerType = Rc::new(add_handler);
+    let serve_h: HandlerType = Rc::new(serve_handler);
     let report_h: HandlerType = Rc::new(report_handler);
 
-    engine.new_command("greet", CmdInfo::new(
-        greet_h, vec![], vec!["name"], false,
-        "Greet someone. Optional: name. Flag: --loud",
-    ));
-    engine.new_command("add", CmdInfo::new(
-        add_h, vec!["a", "b"], vec![], false,
-        "Sum two numbers",
-    ));
-    engine.new_command("serve", CmdInfo::new(
-        serve_h, vec!["host", "port"], vec![], false,
-        "Start a server. Flags: --verbose, --tls=on|off",
-    ));
-    engine.new_command("report", CmdInfo::new(
-        report_h, vec![], vec![], false,
-        "Render templates + JSON",
-    ));
+    engine.new_command(
+        "greet",
+        CmdInfo::new(
+            greet_h,
+            vec![],
+            vec!["name"],
+            false,
+            "Greet someone. Optional: name. Flag: --loud",
+        ),
+    );
+    engine.new_command(
+        "add",
+        CmdInfo::new(add_h, vec!["a", "b"], vec![], false, "Sum two numbers"),
+    );
+    engine.new_command(
+        "serve",
+        CmdInfo::new(
+            serve_h,
+            vec!["host", "port"],
+            vec![],
+            false,
+            "Start a server. Flags: --verbose, --tls=on|off",
+        ),
+    );
+    engine.new_command(
+        "report",
+        CmdInfo::new(report_h, vec![], vec![], false, "Render templates + JSON"),
+    );
 
     add_help_handler(vec!["help", "-h", "--help"], &mut engine);
 
