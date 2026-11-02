@@ -153,6 +153,8 @@ func myHandler(p *tap.Parser, args []string) error {
 
 The output is automatically prefixed with the flag name and coloured.
 
+After `--` all flags will be positional arguments.
+
 ## Colors
 
 <img alt="color-demo" src="https://github.com/user-attachments/assets/d5dec876-7b1d-4fcc-8ec3-9465c095a94c" />

@@ -39,8 +39,14 @@ func (u *Utils) ParseArgs(argv []string) (map[string]string, []string) {
 	flags := make(map[string]string)
 	var result []string
 
+	can_be_flag := true
 	for _, el := range argv {
-		if strings.HasPrefix(el, "--") {
+		if el == "--" {
+			can_be_flag = false
+			continue
+		}
+
+		if strings.HasPrefix(el, "--") && can_be_flag {
 			key, val := u.ParseFlag(el)
 			flags[key] = val
 		} else {

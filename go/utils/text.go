@@ -2,6 +2,8 @@ package utils
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 )
 
@@ -27,7 +29,8 @@ func FramedTextList(frameColor, header, postfix string, text []string) string {
 func FramedTextMap(frameColor, header, postfix string, text map[string]string) string {
 	res := []string{}
 	res = append(res, fmt.Sprintf("[?%v]╭─────── [?RT]%v", frameColor, header))
-	for name, textSub := range text {
+	for _, name := range slices.Sorted(maps.Keys(text)) {
+		textSub := text[name]
 		if name != "" {
 			res = append(res, fmt.Sprintf("[?%v]⎬─ [?RT]%v", frameColor, name))
 		}
