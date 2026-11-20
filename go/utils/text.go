@@ -96,26 +96,40 @@ func CutTextForWidth(width int, text string) string {
 	if width <= 0 {
 		return text
 	}
-
 	var sb strings.Builder
 	lines := strings.Split(text, "\n")
-
 	for lineIdx, line := range lines {
 		if lineIdx > 0 {
 			sb.WriteByte('\n')
 		}
-
-		words := strings.Split(line, " ")
+		tokens := splitTokensWithSpaces(line)
 		curLen := 0
-
-		for _, word := range words {
-			wordLen := visibleLen(word)
-			if wordLen > width {
+		for _, token := range tokens {
+			tokenLen := visibleLen(token)
+			isSpace := len(token) > 0 && token[0] == ' '
+			if isSpace {
+				if curLen+tokenLen <= width {
+					sb.WriteString(token)
+					curLen += tokenLen
+				} else {
+					rem := (curLen + tokenLen) - width
+					sb.WriteByte('\n')
+					if rem > 0 && curLen > 0 {
+						rem--
+					}
+					if rem > 0 {
+						sb.WriteString(strings.Repeat(" ", rem))
+					}
+					curLen = rem
+				}
+				continue
+			}
+			if tokenLen > width {
 				if curLen > 0 {
 					sb.WriteByte('\n')
 					curLen = 0
 				}
-				runes := []rune(word)
+				runes := []rune(token)
 				chunkLen := 0
 				for i := 0; i < len(runes); i++ {
 					if endIdx, ok := skipANSI(runes, i); ok {
@@ -135,26 +149,40 @@ func CutTextForWidth(width int, text string) string {
 				curLen = chunkLen
 				continue
 			}
-
-			needSpace := 0
-			if curLen > 0 {
-				needSpace = 1
-			}
-
-			if curLen+needSpace+wordLen > width {
+			if curLen+tokenLen > width {
+				str := sb.String()
+				trimmed := strings.TrimRight(str, " ")
+				if len(trimmed) < len(str) && !strings.HasSuffix(trimmed, "\n") {
+					sb.Reset()
+					sb.WriteString(trimmed)
+				}
 				sb.WriteByte('\n')
 				curLen = 0
-				needSpace = 0
 			}
-
-			if needSpace > 0 {
-				sb.WriteByte(' ')
-				curLen++
-			}
-			sb.WriteString(word)
-			curLen += wordLen
+			sb.WriteString(token)
+			curLen += tokenLen
 		}
 	}
-
 	return sb.String()
+}
+
+func splitTokensWithSpaces(s string) []string {
+	var tokens []string
+	var cur strings.Builder
+	inSpace := false
+	for i := 0; i < len(s); i++ {
+		isSp := s[i] == ' '
+		if i == 0 {
+			inSpace = isSp
+		} else if isSp != inSpace {
+			tokens = append(tokens, cur.String())
+			cur.Reset()
+			inSpace = isSp
+		}
+		cur.WriteByte(s[i])
+	}
+	if cur.Len() > 0 {
+		tokens = append(tokens, cur.String())
+	}
+	return tokens
 }

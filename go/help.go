@@ -76,9 +76,18 @@ func printSubcommandBlock(p *Parser, name string, el *Parser) {
 	color.PrintlnColored(p._config.help_subcommand_block_fmt, "[?YW]"+name+"[?RT]")
 	if el._about_info != "" {
 		color.PrintlnColored(p._config.help_docs_header_block_fmt)
-		for _, line := range strings.Split(el._about_info, "\n") {
-			color.PrintlnColored(p._config.help_docs_data_block_fmt, line)
+		_text := utils.CutTextForWidth(p.TermWidth-p._config.help_args_data_block_padding,
+			color.Set(el._about_info))
+		text := ""
+		colored_docs_block := color.Set(p._config.help_docs_data_block_fmt)
+		lines := strings.Split(_text, "\n")
+		for pos, line := range lines {
+			text += fmt.Sprintf(colored_docs_block, line)
+			if pos != len(lines)-1 {
+				text += "\n"
+			}
 		}
+		fmt.Println(text)
 	}
 	color.PrintlnColored(p._config.help_end_block_fmt)
 }
