@@ -98,75 +98,62 @@ func CutTextForWidth(width int, text string) string {
 	}
 
 	var sb strings.Builder
-	sb.Grow(len(text) + len(text)/width)
+	lines := strings.Split(text, "\n")
 
-	runes := []rune(text)
-	lineLen := 0
-
-	for i := 0; i < len(runes); i++ {
-		if endIdx, ok := skipANSI(runes, i); ok {
-			for k := i; k <= endIdx; k++ {
-				sb.WriteRune(runes[k])
-			}
-			i = endIdx
-			continue
+	for lineIdx, line := range lines {
+		if lineIdx > 0 {
+			sb.WriteByte('\n')
 		}
 
-		char := runes[i]
+		words := strings.Split(line, " ")
+		curLen := 0
 
-		if char == '\n' {
-			sb.WriteRune(char)
-			lineLen = 0
-			continue
-		}
-
-		if lineLen >= width {
-			var nextChar rune
-			nextIdx := i + 1
-			for nextIdx < len(runes) {
-				if endIdx, ok := skipANSI(runes, nextIdx); ok {
-					nextIdx = endIdx + 1
-					continue
+		for _, word := range words {
+			wordLen := visibleLen(word)
+			if wordLen > width {
+				if curLen > 0 {
+					sb.WriteByte('\n')
+					curLen = 0
 				}
-				nextChar = runes[nextIdx]
-				break
-			}
-
-			if char == ' ' {
-				sb.WriteRune('\n')
-				lineLen = 0
+				runes := []rune(word)
+				chunkLen := 0
+				for i := 0; i < len(runes); i++ {
+					if endIdx, ok := skipANSI(runes, i); ok {
+						for k := i; k <= endIdx; k++ {
+							sb.WriteRune(runes[k])
+						}
+						i = endIdx
+						continue
+					}
+					if chunkLen == width-1 && i < len(runes)-1 {
+						sb.WriteString("-\n")
+						chunkLen = 0
+					}
+					sb.WriteRune(runes[i])
+					chunkLen++
+				}
+				curLen = chunkLen
 				continue
 			}
 
-			sb.WriteRune(char)
-
-			if !unicode.IsLetter(char) {
-				if nextChar == ' ' {
-					for k := i + 1; k < nextIdx; k++ {
-						sb.WriteRune(runes[k])
-					}
-					i = nextIdx
-				}
-				sb.WriteRune('\n')
-				lineLen = 0
-			} else if nextChar == ' ' || nextChar == 0 || !unicode.IsLetter(nextChar) {
-				if nextChar == ' ' {
-					for k := i + 1; k < nextIdx; k++ {
-						sb.WriteRune(runes[k])
-					}
-					i = nextIdx
-				}
-				sb.WriteRune('\n')
-				lineLen = 0
-			} else if isVowel(char) || isConsonant(char) {
-				sb.WriteString("-\n")
-				lineLen = 0
+			needSpace := 0
+			if curLen > 0 {
+				needSpace = 1
 			}
-			continue
-		}
 
-		sb.WriteRune(char)
-		lineLen++
+			if curLen+needSpace+wordLen > width {
+				sb.WriteByte('\n')
+				curLen = 0
+				needSpace = 0
+			}
+
+			if needSpace > 0 {
+				sb.WriteByte(' ')
+				curLen++
+			}
+			sb.WriteString(word)
+			curLen += wordLen
+		}
 	}
 
 	return sb.String()
