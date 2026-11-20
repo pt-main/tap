@@ -8,6 +8,7 @@ import (
 
 	"github.com/pt-main/tap/go/color"
 	"github.com/pt-main/tap/go/core"
+	"github.com/pt-main/tap/go/utils"
 )
 
 // HandlerFuncType defines the signature for command handler functions.
@@ -47,6 +48,7 @@ type Parser struct {
 	_commands     map[string]command
 	_sub_commands map[string]*Parser
 	_config       ParserConfig
+	TermWidth     int
 }
 
 // NewParser creates a new Parser instance.
@@ -71,6 +73,7 @@ func NewParser(cli_name string, about string, help_commands []string, config Par
 		_config:       config,
 		Super:         nil,
 		Scope:         make(core.ScopeType),
+		TermWidth:     utils.GetTermWidth(),
 	}
 	if help_commands == nil {
 		help_commands = []string{"help", "h"}

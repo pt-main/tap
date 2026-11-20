@@ -1,11 +1,13 @@
 package tap
 
 import (
+	"fmt"
 	"slices"
 	"sort"
 	"strings"
 
 	"github.com/pt-main/tap/go/color"
+	"github.com/pt-main/tap/go/utils"
 )
 
 func helpFormArgs(el command) string {
@@ -54,9 +56,18 @@ func printCommandBlock(p *Parser, el command, gatherAliases bool) {
 
 	if el.docstring != "" && el.docstring != DONT_SHOW {
 		color.PrintlnColored(p._config.help_docs_header_block_fmt)
-		for _, line := range strings.Split(el.docstring, "\n") {
-			color.PrintlnColored(p._config.help_docs_data_block_fmt, line)
+		_text := utils.CutTextForWidth(p.TermWidth-p._config.help_args_data_block_padding,
+			color.Set(el.docstring))
+		text := ""
+		colored_docs_block := color.Set(p._config.help_docs_data_block_fmt)
+		lines := strings.Split(_text, "\n")
+		for pos, line := range lines {
+			text += fmt.Sprintf(colored_docs_block, line)
+			if pos != len(lines)-1 {
+				text += "\n"
+			}
 		}
+		fmt.Println(text)
 	}
 	color.PrintlnColored(p._config.help_end_block_fmt)
 }

@@ -2,6 +2,8 @@
 // for commands, flags, colored output, and customizable help messages.
 package tap
 
+import "github.com/pt-main/tap/go/color"
+
 // DONT_SHOW is a special docstring value that hides the command from the help output.
 // The command remains functional but will not appear in the auto-generated help.
 const DONT_SHOW = "#[DON'T SHOW]#"
@@ -15,21 +17,22 @@ const DEFAULT_CMD = "#[DEFAULT CMD]#"
 
 // HELP_DOCS is the docstring used by the built‑in help command.
 // Commands sharing this docstring will be grouped together as aliases.
-const HELP_DOCS = "Generate and print help message"
+var HELP_DOCS = "Generate and print help message"
 
 // ParserConfig defines the formatting templates for the auto-generated help message.
 // Each field is a format string that may contain "%s" placeholders for dynamic content.
 // If an empty string is passed to NewParserConfig, the corresponding default format will be used.
 type ParserConfig struct {
-	help_command_block_fmt     string
-	help_subcommand_block_fmt  string
-	help_args_header_block_fmt string
-	help_args_data_block_fmt   string
-	help_docs_header_block_fmt string
-	help_docs_data_block_fmt   string
-	help_end_block_fmt         string
-	BuiltinVerboseDebug        bool
-	BuiltinNoColor             bool
+	help_command_block_fmt       string
+	help_subcommand_block_fmt    string
+	help_args_header_block_fmt   string
+	help_args_data_block_fmt     string
+	help_args_data_block_padding int
+	help_docs_header_block_fmt   string
+	help_docs_data_block_fmt     string
+	help_end_block_fmt           string
+	BuiltinVerboseDebug          bool
+	BuiltinNoColor               bool
 }
 
 // NewParserConfig creates a new ParserConfig with the given format strings.
@@ -49,6 +52,7 @@ func NewParserConfig(
 	help_subcommand_block_fmt string,
 	help_args_header_block_fmt string,
 	help_args_data_block_fmt string,
+	help_args_data_block_padding int,
 	help_docs_header_block_fmt string,
 	help_docs_data_block_fmt string,
 	help_end_block_fmt string,
@@ -66,6 +70,10 @@ func NewParserConfig(
 	}
 	if help_args_data_block_fmt == "" {
 		help_args_data_block_fmt = "[?GN]│[?RT]     %s"
+		help_args_data_block_padding = 10
+	}
+	if help_args_data_block_padding == -1 {
+		help_args_data_block_padding = len(color.Set(help_args_data_block_fmt))
 	}
 	if help_docs_header_block_fmt == "" {
 		help_docs_header_block_fmt = "[?GN]⎬─ Desc:[?RT]"
@@ -78,19 +86,20 @@ func NewParserConfig(
 	}
 
 	return ParserConfig{
-		help_command_block_fmt:     help_command_block_fmt,
-		help_subcommand_block_fmt:  help_subcommand_block_fmt,
-		help_args_header_block_fmt: help_args_header_block_fmt,
-		help_args_data_block_fmt:   help_args_data_block_fmt,
-		help_docs_header_block_fmt: help_docs_header_block_fmt,
-		help_docs_data_block_fmt:   help_docs_data_block_fmt,
-		help_end_block_fmt:         help_end_block_fmt,
-		BuiltinVerboseDebug:        BuiltinVerboseDebug,
-		BuiltinNoColor:             BuiltinNoColor,
+		help_command_block_fmt:       help_command_block_fmt,
+		help_subcommand_block_fmt:    help_subcommand_block_fmt,
+		help_args_header_block_fmt:   help_args_header_block_fmt,
+		help_args_data_block_fmt:     help_args_data_block_fmt,
+		help_docs_header_block_fmt:   help_docs_header_block_fmt,
+		help_docs_data_block_fmt:     help_docs_data_block_fmt,
+		help_args_data_block_padding: help_args_data_block_padding,
+		help_end_block_fmt:           help_end_block_fmt,
+		BuiltinVerboseDebug:          BuiltinVerboseDebug,
+		BuiltinNoColor:               BuiltinNoColor,
 	}
 }
 
 // Create default parser config.
 func DefaultParserConfig() ParserConfig {
-	return NewParserConfig("", "", "", "", "", "", "", false, true)
+	return NewParserConfig("", "", "", "", -1, "", "", "", false, true)
 }
