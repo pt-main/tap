@@ -64,7 +64,7 @@ func FramedTextMapWithPadding(frameColor, header, postfix string, padding int, t
 		if name != "" {
 			res = append(res, fmt.Sprintf("[?%v]⎬─ [?RT]%v", frameColor, name))
 		}
-		textSub = CutTextForWidth(max(GetTermWidth()-8-padding, 10), color.Set(textSub))
+		textSub = CutTextForWidth(max(GetTermWidth()-5-padding, 10), color.Set(textSub))
 		for _, line := range strings.Split(textSub, "\n") {
 			res = append(res, fmt.Sprintf("[?%v]│  [?RT]%v", frameColor, line))
 		}
